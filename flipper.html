@@ -162,8 +162,8 @@
     const PLAYER_SPEED = 5; 
     const PLATFORM_COUNT = 10;
     const PLATFORM_HEIGHT = 20;
-    const MOVING_PLATFORM_THRESHOLD = 2000;
-    const NEW_PLATFORM_THRESHOLD = 1000;
+    const MOVING_PLATFORM_THRESHOLD = 800;
+    const NEW_PLATFORM_THRESHOLD = 500;
     const STAR_COUNT = 100;
     const HIGHSCORE_KEY = 'drFlipHighScore';
 
@@ -288,7 +288,7 @@
     
     // --- Game Initialization ---
     function initGame() {
-        gravity = 0.75; score = 0; maxScore = 0;
+        gravity = 0.45; score = 0; maxScore = 0;
         player = createPlayer(canvas.width / 2 - 20, canvas.height - 80);
         player.vy = -JUMP_POWER / 2;
         
