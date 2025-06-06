@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typing Tutor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* bg-gray-900 */
+        }
+        .caret {
+            animation: blink 1s infinite;
+            transition: left 0.1s ease, top 0.1s ease;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        .char-untyped { color: #6b7280; }
+        .char-correct { color: #d1d5db; }
+        .char-incorrect { color: #ef4444; text-decoration: underline; }
+        
+        #text-container::-webkit-scrollbar { display: none; }
+        #text-container { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="text-gray-100 flex items-center justify-center min-h-screen">
+    <div class="container mx-auto p-4 max-w-4xl text-center">
+        
+        <h1 class="text-4xl font-bold text-yellow-400 mb-4">Typing Tutor</h1>
+        
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+            
+            <!-- Typing Test Area -->
+            <div id="typing-area">
+                <!-- Stats Display -->
+                <div id="stats" class="flex justify-center items-center space-x-8 mb-6 text-2xl">
+                    <div><span class="font-semibold text-yellow-400">WPM:</span> <span id="wpm">0</span></div>
+                    <div><span class="font-semibold text-yellow-400">Accuracy:</span> <span id="accuracy">100%</span></div>
+                    <div><span class="font-semibold text-yellow-400">Time:</span> <span id="timer">0s</span></div>
+                </div>
+
+                <!-- Text Display Area -->
+                <div id="text-container" class="relative text-2xl md:text-3xl leading-relaxed bg-gray-700 p-4 rounded-lg mb-6 h-40 overflow-y-auto" onclick="document.getElementById('hidden-input').focus()">
+                    <div id="text-to-type" class="select-none"></div>
+                    <span id="caret" class="caret absolute text-yellow-400 text-3xl font-bold">|</span>
+                </div>
+            </div>
+
+            <!-- Results Screen Area -->
+            <div id="results-area" class="hidden">
+                 <h2 class="text-3xl font-bold text-yellow-400 mb-4">Test Complete!</h2>
+                 <div class="flex justify-around items-center mb-6 text-2xl">
+                    <div><span class="font-semibold text-yellow-400">WPM:</span> <span id="final-wpm">0</span></div>
+                    <div><span class="font-semibold text-yellow-400">Accuracy:</span> <span id="final-accuracy">100%</span></div>
+                 </div>
+                 <div class="w-full h-64">
+                    <canvas id="results-chart"></canvas>
+                 </div>
+            </div>
+
+            <!-- Hidden Input Field -->
+            <input type="text" id="hidden-input" class="absolute opacity-0 w-0 h-0" autofocus>
+
+             <!-- Restart Button -->
+            <button id="restart-btn" class="mt-4 bg-yellow-400 text-gray-900 font-bold py-2 px-6 rounded-lg hover:bg-yellow-500 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-yellow-300">
+                Restart
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const words = [
+            "the", "be", "to", "of", "and", "a", "in", "that", "have", "I", "it", "for", "not", "on", "with", "he", "as", 
+            "you", "do", "at", "this", "but", "his", "by", "from", "they", "we", "say", "her", "she", "or", "an", "will", "my", 
+            "one", "all", "would", "there", "their", "what", "so", "up", "out", "if", "about", "who", "get", "which", "go", 
+            "me", "when", "make", "can", "like", "time", "no", "just", "him", "know", "take", "people", "into", "year", "your", 
+            "good", "some", "could", "them", "see", "other", "than", "then", "now", "look", "only", "come", "its", "over", 
+            "think", "also", "back", "after", "use", "two", "how", "our", "work", "first", "well", "way", "even", "new", 
+            "want", "because", "any", "these", "give", "day", "most", "us", "code", "system", "program", "project", "web"
+        ];
+
+        // DOM Elements
+        const typingArea = document.getElementById('typing-area');
+        const resultsArea = document.getElementById('results-area');
+        const textContainer = document.getElementById('text-container');
+        const textToTypeElement = document.getElementById('text-to-type');
+        const hiddenInputElement = document.getElementById('hidden-input');
+        const wpmElement = document.getElementById('wpm');
+        const accuracyElement = document.getElementById('accuracy');
+        const timerElement = document.getElementById('timer');
+        const finalWpmElement = document.getElementById('final-wpm');
+        const finalAccuracyElement = document.getElementById('final-accuracy');
+        const restartBtn = document.getElementById('restart-btn');
+        const caretElement = document.getElementById('caret');
+        const chartCanvas = document.getElementById('results-chart');
+
+        // State variables
+        let correctCharsTyped = 0;
+        let totalCharsTyped = 0;
+        let startTime;
+        let timerInterval;
+        let currentText = '';
+        let wpmHistory = [];
+        let chart;
+
+        function getRandomWords() {
+            let randomWords = [];
+            for (let i = 0; i < 50; i++) {
+                randomWords.push(words[Math.floor(Math.random() * words.length)]);
+            }
+            return randomWords.join(' ');
+        }
+        
+        function initializeTest() {
+            // Reset UI
+            resultsArea.classList.add('hidden');
+            typingArea.classList.remove('hidden');
+            hiddenInputElement.disabled = false;
+            
+            // Generate and display text
+            currentText = getRandomWords();
+            textToTypeElement.innerHTML = '';
+            textContainer.scrollTop = 0;
+            currentText.split('').forEach(char => {
+                const charSpan = document.createElement('span');
+                charSpan.innerText = char;
+                charSpan.className = 'char-untyped';
+                textToTypeElement.appendChild(charSpan);
+            });
+            
+            resetState();
+            hiddenInputElement.focus();
+            updateCaretPosition(0);
+        }
+        
+        function resetState() {
+            correctCharsTyped = 0;
+            totalCharsTyped = 0;
+            wpmHistory = [];
+            
+            wpmElement.innerText = '0';
+            accuracyElement.innerText = '100%';
+            timerElement.innerText = '0s';
+            
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = null;
+            startTime = null;
+            hiddenInputElement.value = '';
+
+            if (chart) {
+                chart.destroy();
+            }
+        }
+
+        function updateCaretPosition(index) {
+            // This function remains largely the same
+            const allCharSpans = textToTypeElement.querySelectorAll('span');
+            const containerRect = textContainer.getBoundingClientRect();
+            let top, left;
+
+            if (index < allCharSpans.length) {
+                const currentSpan = allCharSpans[index];
+                currentSpan.scrollIntoView({ block: 'nearest' });
+                const rect = currentSpan.getBoundingClientRect();
+                top = rect.top;
+                left = rect.left;
+            } else if (index > 0) {
+                const lastSpan = allCharSpans[index - 1];
+                 lastSpan.scrollIntoView({ block: 'nearest' });
+                const rect = lastSpan.getBoundingClientRect();
+                top = rect.top;
+                left = rect.right;
+            }
+
+            if(top && left){
+                caretElement.style.top = `${top - containerRect.top + textContainer.scrollTop}px`;
+                caretElement.style.left = `${left - containerRect.left}px`;
+            }
+        }
+        
+        hiddenInputElement.addEventListener('input', () => {
+            if (!startTime && hiddenInputElement.value.length > 0) {
+                startTime = new Date();
+                timerInterval = setInterval(updateStats, 1000);
+            }
+
+            const typedText = hiddenInputElement.value;
+            totalCharsTyped = typedText.length;
+            correctCharsTyped = 0;
+            const allCharSpans = textToTypeElement.querySelectorAll('span');
+
+            allCharSpans.forEach((span, index) => {
+                const character = typedText[index];
+                if (character == null) {
+                    span.className = 'char-untyped';
+                } else if (character === span.innerText) {
+                    span.className = 'char-correct';
+                    if (index < totalCharsTyped) correctCharsTyped++;
+                } else {
+                    span.className = 'char-incorrect';
+                }
+            });
+            
+            updateCaretPosition(totalCharsTyped);
+            
+            // End of test condition
+            if (totalCharsTyped >= currentText.length) {
+                endTest();
+            }
+        });
+
+        function updateStats() {
+            if (!startTime) return;
+
+            const elapsedTime = (new Date() - startTime) / 1000;
+            timerElement.innerText = `${Math.floor(elapsedTime)}s`;
+
+            const wpm = elapsedTime > 0 ? Math.round((correctCharsTyped / 5) / (elapsedTime / 60)) : 0;
+            wpmElement.innerText = wpm;
+            wpmHistory.push({ time: Math.floor(elapsedTime), wpm: wpm });
+
+
+            const accuracy = totalCharsTyped > 0 ? Math.round((correctCharsTyped / totalCharsTyped) * 100) : 100;
+            accuracyElement.innerText = `${accuracy}%`;
+        }
+        
+        function endTest() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = null;
+            hiddenInputElement.disabled = true;
+
+            // Final calculation
+            const elapsedTime = (new Date() - startTime) / 1000;
+            const finalWPM = Math.round((correctCharsTyped / 5) / (elapsedTime / 60));
+            const finalAccuracy = Math.round((correctCharsTyped / totalCharsTyped) * 100);
+
+            // Display final stats
+            finalWpmElement.innerText = finalWPM;
+            finalAccuracyElement.innerText = `${finalAccuracy}%`;
+            
+            // Switch views
+            typingArea.classList.add('hidden');
+            resultsArea.classList.remove('hidden');
+
+            // Render chart
+            renderChart();
+        }
+
+        function renderChart() {
+            const labels = wpmHistory.map(data => `${data.time}s`);
+            const data = wpmHistory.map(data => data.wpm);
+            
+            const ctx = chartCanvas.getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'WPM',
+                        data: data,
+                        borderColor: '#facc15', // yellow-400
+                        backgroundColor: 'rgba(250, 204, 21, 0.2)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#facc15'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Words Per Minute', color: '#d1d5db'},
+                            ticks: { color: '#d1d5db' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        x: {
+                             title: { display: true, text: 'Time (seconds)', color: '#d1d5db'},
+                             ticks: { color: '#d1d5db' },
+                             grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#d1d5db'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        restartBtn.addEventListener('click', initializeTest);
+        
+        window.onload = initializeTest;
+        window.onresize = () => {
+            if (!resultsArea.classList.contains('hidden')) return;
+            updateCaretPosition(hiddenInputElement.value.length);
+        };
+    </script>
+</body>
+</html>
