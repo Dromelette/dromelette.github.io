@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Dr.Flip</title>
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #0c0a18; /* Dark Space Blue */
+            font-family: 'Patrick Hand', cursive;
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10+ */
+            user-select: none;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        canvas {
+            background-color: transparent;
+            display: block;
+        }
+        .ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white; /* Changed text to white */
+            text-align: center;
+            z-index: 10;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        #menu, #gameOverScreen {
+            background-color: rgba(0, 0, 0, 0.5); /* Darker transparent background */
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 2px solid rgba(255,255,255,0.5);
+            max-width: 90%;
+        }
+        h1 {
+            font-size: clamp(2.5rem, 10vw, 3.5rem);
+            color: #ffc107; /* Yellow color for title */
+            margin-bottom: 1rem;
+        }
+        p {
+            font-size: clamp(1rem, 5vw, 1.2rem);
+            margin-bottom: 1.5rem;
+        }
+        .score-line {
+            font-size: 1.5rem;
+            color: #eee;
+        }
+        .new-high-score {
+            color: #ffc107;
+            font-weight: bold;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        button {
+            font-family: 'Patrick Hand', cursive;
+            font-size: 1.5rem;
+            padding: 0.8rem 2rem;
+            border-radius: 2rem;
+            border: 2px solid #ffc107;
+            background-color: transparent;
+            color: #ffc107;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        button:hover {
+            background-color: #ffc107;
+            color: #0c0a18;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        #score-display {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 2rem;
+            color: #fff;
+            text-shadow: 1px 1px 3px #000;
+            display: none; /* Hidden by default */
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="score-display">Score: 0</div>
+        
+        <!-- UI Screens -->
+        <div id="menu" class="ui">
+            <div>
+                <h1>Dr.Flip</h1>
+                <p class="score-line">High Score: <span id="menuHighScore">0</span></p>
+                <div class="controls" style="color: #eee;">
+                    <strong>PC:</strong> Use Left/Right arrow keys.
+                    <br>
+                    <strong>Mobile:</strong> Tilt your device.
+                </div>
+                <button id="startButton">Start Game</button>
+            </div>
+        </div>
+        <div id="gameOverScreen" class="ui hidden">
+            <div>
+                <h1>Game Over</h1>
+                <p class="score-line">Score: <span id="finalScore">0</span></p>
+                <p class="score-line">High Score: <span id="gameOverHighScore">0</span></p>
+                <p id="newHighScoreText" class="new-high-score hidden">New High Score!</p>
+                <button id="restartButton">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // --- Basic Setup ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const menu = document.getElementById('menu');
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    const startButton = document.getElementById('startButton');
+    const restartButton = document.getElementById('restartButton');
+    const scoreDisplay = document.getElementById('score-display');
+    const finalScoreEl = document.getElementById('finalScore');
+    const menuHighScoreEl = document.getElementById('menuHighScore');
+    const gameOverHighScoreEl = document.getElementById('gameOverHighScore');
+    const newHighScoreText = document.getElementById('newHighScoreText');
+
+    let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    let gameState = 'menu'; // menu, playing, gameOver
+
+    // --- Game Variables ---
+    let player, platforms, gravity, score, maxScore, keys, collectibles, stars, highScore;
+    let jetpackParticles = [];
+    
+    // --- Game Constants ---
+    const JUMP_POWER = 16;
+    const BOUNCY_JUMP_POWER = 28;
+    const JETPACK_THRUST = 8;
+    const JETPACK_FUEL = 180; // 3 seconds at 60fps
+    const PLAYER_SPEED = 5; 
+    const PLATFORM_COUNT = 10;
+    const PLATFORM_HEIGHT = 20;
+    const MOVING_PLATFORM_THRESHOLD = 2000;
+    const NEW_PLATFORM_THRESHOLD = 1000;
+    const STAR_COUNT = 100;
+    const HIGHSCORE_KEY = 'drFlipHighScore';
+
+    function resizeCanvas() {
+        const maxWidth = 500;
+        const maxHeight = 800;
+        const aspectRatio = 5 / 8;
+        
+        let width = Math.min(maxWidth, window.innerWidth - 20);
+        let height = Math.min(maxHeight, window.innerHeight - 20);
+
+        if (width / height > aspectRatio) {
+            width = height * aspectRatio;
+        } else {
+            height = width / aspectRatio;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        if(stars) {
+            initStars();
+        }
+    }
+
+
+    // --- Game Object Definitions ---
+    function createPlayer(x, y) {
+        return {
+            x: x, y: y, width: 40, height: 40,
+            vx: 0, vy: 0, onPlatform: null,
+            jetpackActive: false, jetpackFuel: 0,
+            draw: function() {
+                ctx.save();
+                const maxStretch = 4, squashFactor = 0.2, stretchFactor = 0.3;
+                let dynamicHeight = this.height, dynamicWidth = this.width;
+
+                if (this.vy < 0 && !this.jetpackActive) { // Jumping up (stretch)
+                    dynamicHeight += Math.min(maxStretch, -this.vy * stretchFactor);
+                    dynamicWidth -= Math.min(maxStretch, -this.vy * stretchFactor);
+                } else if (this.vy > 0 && !this.jetpackActive) { // Falling down (squash)
+                    dynamicHeight -= Math.min(maxStretch, this.vy * squashFactor);
+                    dynamicWidth += Math.min(maxStretch, this.vy * squashFactor);
+                }
+                
+                const drawX = this.x + (this.width - dynamicWidth) / 2;
+                const drawY = this.y + (this.height - dynamicHeight) / 2;
+                
+                ctx.fillStyle = '#ff8c00'; ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.roundRect(drawX, drawY, dynamicWidth, dynamicHeight, [15, 15, 5, 5]);
+                ctx.fill(); ctx.stroke();
+                
+                const eyeSize = this.vy < 0 ? 6 : 5;
+                ctx.fillStyle = '#fff'; ctx.beginPath();
+                ctx.arc(drawX + dynamicWidth * 0.3, drawY + dynamicHeight * 0.4, eyeSize, 0, Math.PI * 2);
+                ctx.arc(drawX + dynamicWidth * 0.7, drawY + dynamicHeight * 0.4, eyeSize, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#333'; ctx.beginPath();
+                ctx.arc(drawX + dynamicWidth * 0.3, drawY + dynamicHeight * 0.4, eyeSize * 0.4, 0, Math.PI * 2);
+                ctx.arc(drawX + dynamicWidth * 0.7, drawY + dynamicHeight * 0.4, eyeSize * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        };
+    }
+
+    function createPlatform(x, y, width, type = 'normal', speed = 0) {
+        return {
+            x, y, width, height: PLATFORM_HEIGHT, type, speed,
+            isCracked: false,
+            draw: function() {
+                if (this.type === 'normal') ctx.fillStyle = '#228B22';
+                else if (this.type === 'moving') ctx.fillStyle = '#cc0000';
+                else if (this.type === 'breaking') ctx.fillStyle = '#D2B48C';
+                else if (this.type === 'bouncy') ctx.fillStyle = 'white';
+                
+                ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.roundRect(this.x, this.y, this.width, this.height, 10);
+                ctx.fill(); ctx.stroke();
+
+                if (this.type === 'bouncy') {
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.width / 2, this.y + this.height / 2, this.width / 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                if (this.isCracked) {
+                    ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + 20, this.y + 5);
+                    ctx.lineTo(this.x + this.width - 20, this.y + this.height - 5);
+                    ctx.moveTo(this.x + this.width / 2, this.y + 2);
+                    ctx.lineTo(this.x + this.width / 2, this.y + this.height - 2);
+                    ctx.stroke();
+                }
+            }
+        };
+    }
+
+    function createCollectible(x, y, type) {
+        const emoji = type === 'egg' ? '🍳' : '🥓';
+        return { x, y, width: 30, height: 30, type, emoji,
+            draw: function() {
+                ctx.font = '30px serif'; ctx.fillText(this.emoji, this.x, this.y + this.height);
+            }
+        };
+    }
+
+    function initStars() {
+        stars = [];
+        for (let i = 0; i < STAR_COUNT; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 1.5,
+                speed: Math.random() * 0.5 + 0.2
+            });
+        }
+    }
+    
+    // --- Game Initialization ---
+    function initGame() {
+        gravity = 0.55; score = 0; maxScore = 0;
+        player = createPlayer(canvas.width / 2 - 20, canvas.height - 80);
+        player.vy = -JUMP_POWER / 2;
+        
+        keys = { right: false, left: false };
+        platforms = [createPlatform(canvas.width / 2 - 50, canvas.height - 50, 100)];
+        collectibles = [];
+        jetpackParticles = [];
+        for (let i = 1; i < PLATFORM_COUNT; i++) {
+            createNewPlatform();
+        }
+    }
+    
+    function createNewPlatform(){
+        let lastPlatformY = Math.min(...platforms.map(p => p.y));
+        let newY = lastPlatformY - (Math.random() * 80 + 80);
+        let newX = Math.random() * (canvas.width - 90);
+        
+        let type = 'normal', speed = 0;
+        if (maxScore > NEW_PLATFORM_THRESHOLD) {
+             const rand = Math.random();
+             if(rand < 0.15) type = 'bouncy';
+             else if (rand < 0.35) type = 'breaking';
+             else if (maxScore > MOVING_PLATFORM_THRESHOLD && rand < 0.55) {
+                 type = 'moving';
+                 speed = (Math.random() * 1 + 0.5) * (Math.random() < 0.5 ? 1 : -1);
+             }
+        }
+        
+        platforms.unshift(createPlatform(newX, newY, 90, type, speed));
+        if (type === 'normal' && Math.random() < 0.2) {
+            const collectibleType = Math.random() < 0.1 ? 'jetpack' : 'egg'; // 10% chance for jetpack
+            collectibles.push(createCollectible(newX + 30, newY - 40, collectibleType));
+        }
+    }
+
+    // --- Game Controls ---
+    function setupControls() {
+        window.addEventListener('keydown', e => {
+            if (gameState !== 'playing') return;
+            if (e.key === 'ArrowRight') keys.right = true; if (e.key === 'ArrowLeft') keys.left = true;
+        });
+        window.addEventListener('keyup', e => {
+            if (e.key === 'ArrowRight') keys.right = false; if (e.key === 'ArrowLeft') keys.left = false;
+        });
+        if (isMobile) window.addEventListener('deviceorientation', handleOrientation, true);
+    }
+    
+    function handleOrientation(event) {
+        if (gameState !== 'playing' || !player) return;
+        const tilt = event.gamma;
+        player.vx = tilt * 0.5;
+    }
+
+    // --- High Score Logic ---
+    function loadHighScore() {
+        highScore = localStorage.getItem(HIGHSCORE_KEY) || 0;
+        menuHighScoreEl.textContent = highScore;
+    }
+
+    function saveHighScore() {
+        if (maxScore > highScore) {
+            highScore = maxScore;
+            localStorage.setItem(HIGHSCORE_KEY, highScore);
+            newHighScoreText.classList.remove('hidden');
+        } else {
+            newHighScoreText.classList.add('hidden');
+        }
+        gameOverHighScoreEl.textContent = highScore;
+    }
+
+    // --- Update and Draw ---
+    function update() {
+        if (gameState !== 'playing') return;
+        
+        // --- Jetpack Logic ---
+        if (player.jetpackActive) {
+            player.vy = -JETPACK_THRUST;
+            player.jetpackFuel--;
+            // create particles
+            jetpackParticles.push({
+                x: player.x + player.width / 2,
+                y: player.y + player.height,
+                vx: (Math.random() - 0.5) * 2,
+                vy: Math.random() * 3 + 2,
+                life: 30
+            });
+            if (player.jetpackFuel <= 0) {
+                player.jetpackActive = false;
+            }
+        } else {
+            player.vy += gravity;
+        }
+
+
+        if (player.onPlatform) { player.x += player.onPlatform.speed; }
+
+        let baseVx = 0;
+        if (!isMobile) {
+            if (keys.right) baseVx = PLAYER_SPEED; if (keys.left) baseVx = -PLAYER_SPEED;
+            player.vx = baseVx;
+        }
+        player.x += player.vx;
+        
+        const scrollOffset = player.vy < 0 && player.y < canvas.height / 2 ? -player.vy : 0;
+        if(scrollOffset > 0) {
+            score += Math.floor(scrollOffset);
+            if(score > maxScore) maxScore = score;
+            platforms.forEach(p => p.y += scrollOffset);
+            collectibles.forEach(c => c.y += scrollOffset);
+            player.y += scrollOffset;
+        }
+        player.y += player.vy;
+        
+        if (player.x > canvas.width) player.x = -player.width;
+        else if (player.x + player.width < 0) player.x = canvas.width;
+        
+        player.onPlatform = null;
+        for (let i = platforms.length - 1; i >= 0; i--) {
+            const platform = platforms[i];
+            if (platform.speed !== 0) {
+                platform.x += platform.speed;
+                if (platform.x < 0 || platform.x + platform.width > canvas.width) {
+                    platform.speed *= -1;
+                }
+            }
+            if (player.vy > 0 && player.x < platform.x + platform.width &&
+                player.x + player.width > platform.x && player.y + player.height > platform.y &&
+                player.y + player.height < platform.y + platform.height + player.vy) {
+                
+                if (player.jetpackActive) continue; // Don't interact with platforms while jetpacking
+                
+                if(platform.type === 'bouncy') player.vy = -BOUNCY_JUMP_POWER;
+                else if (platform.type === 'breaking') {
+                    if (platform.isCracked) platforms.splice(i, 1);
+                    else {
+                        platform.isCracked = true;
+                         player.vy = -JUMP_POWER;
+                    }
+                } else player.vy = -JUMP_POWER;
+                player.onPlatform = platform;
+            }
+        }
+
+
+        for (let i = collectibles.length - 1; i >= 0; i--) {
+            const c = collectibles[i];
+            if (player.x < c.x + c.width && player.x + player.width > c.x &&
+                player.y < c.y + c.height && player.y + player.height > c.y) {
+                
+                if (c.type === 'egg') score += 250;
+                else if (c.type === 'jetpack') {
+                    player.jetpackActive = true;
+                    player.jetpackFuel = JETPACK_FUEL;
+                }
+                
+                if(score > maxScore) maxScore = score;
+                collectibles.splice(i, 1);
+            }
+        }
+        
+        // --- Jetpack Particle Update ---
+        for (let i = jetpackParticles.length - 1; i >= 0; i--) {
+            const p = jetpackParticles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life--;
+            if (p.life <= 0) jetpackParticles.splice(i, 1);
+        }
+
+
+        platforms = platforms.filter(p => p.y < canvas.height);
+        collectibles = collectibles.filter(c => c.y < canvas.height);
+        while (platforms.length < PLATFORM_COUNT) {
+            createNewPlatform();
+        }
+
+        if (player.y > canvas.height) {
+            changeState('gameOver');
+        }
+        scoreDisplay.textContent = `Score: ${maxScore}`;
+    }
+    
+    function updateStars() {
+        if (!stars) return;
+        const scrollSpeed = gameState === 'playing' && player && player.vy < 0 && player.y < canvas.height / 2 ? -player.vy : 0;
+        stars.forEach(star => {
+            star.y += star.speed + (scrollSpeed * 0.1);
+            if (star.y > canvas.height) {
+                star.y = 0;
+                star.x = Math.random() * canvas.width;
+            }
+        });
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawStars();
+        
+        if (gameState === 'playing' || gameState === 'gameOver') {
+            platforms.forEach(p => p.draw());
+            collectibles.forEach(c => c.draw());
+            if(player) {
+                player.draw();
+                 // Draw jetpack particles
+                jetpackParticles.forEach(p => {
+                    ctx.fillStyle = `rgba(255, ${Math.random() * 150 + 100}, 0, ${p.life / 30})`;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.life / 10, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+        } else if (gameState === 'menu') {
+            const tempPlayer = createPlayer(canvas.width / 2 - 20, canvas.height / 2 - 120);
+            tempPlayer.y += Math.sin(Date.now() / 400) * 10;
+            tempPlayer.draw();
+        }
+    }
+    
+    function drawStars() {
+        if (!stars) return;
+        ctx.fillStyle = 'white';
+        stars.forEach(star => {
+            ctx.beginPath();
+            ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+
+    // --- Main Game Loop ---
+    function animate() {
+        updateStars();
+        if (gameState === 'playing') {
+            update();
+        }
+        draw();
+        requestAnimationFrame(animate);
+    }
+    
+    function changeState(newState) {
+        gameState = newState;
+        
+        if (newState === 'menu') {
+            loadHighScore();
+            menu.classList.remove('hidden');
+            gameOverScreen.classList.add('hidden');
+            scoreDisplay.style.display = 'none';
+        } else if (newState === 'playing') {
+            initGame();
+            menu.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            scoreDisplay.style.display = 'block';
+        } else if (newState === 'gameOver') {
+            saveHighScore();
+            finalScoreEl.textContent = maxScore;
+            gameOverScreen.classList.remove('hidden');
+            scoreDisplay.style.display = 'none';
+        }
+    }
+
+    // --- Event Listeners for UI ---
+    startButton.addEventListener('click', () => {
+        if (isMobile && typeof DeviceMotionEvent.requestPermission === 'function') {
+            DeviceMotionEvent.requestPermission().then(state => {
+                if (state === 'granted') changeState('playing');
+                else alert('Permission for motion sensors is required to play on mobile.');
+            }).catch(console.error);
+        } else {
+            changeState('playing');
+        }
+    });
+
+    restartButton.addEventListener('click', () => {
+        changeState('playing');
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+
+    // --- Initial Setup Call ---
+    function masterInit() {
+        resizeCanvas();
+        initStars();
+        setupControls();
+        changeState('menu');
+        animate();
+    }
+    
+    masterInit();
+    </script>
+</body>
+</html>
