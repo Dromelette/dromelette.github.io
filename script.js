@@ -1,3 +1,5 @@
+// script.js
+
 /* ===== THREE.JS STARFIELD ===== */
 (function initThree(){
   const root = document.getElementById('three-root');
@@ -67,34 +69,46 @@
 const eggBtn  = document.getElementById('eggBtn');
 const crackEl = document.getElementById('crack');
 const audio   = document.getElementById('rickroll');
-let done = false;
+let dropping = false;
 
-eggBtn.addEventListener('click', () => {
-  if (done) return;
-  done = true;
+if (eggBtn) {
+  eggBtn.addEventListener('click', () => {
+    if (dropping) return;
+    dropping = true;
 
-  // start falling
-  eggBtn.classList.add('fall');
+    // Freeze egg at current screen position
+    const rect = eggBtn.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
 
-  // when the egg "hits" the ground
-  eggBtn.addEventListener('animationend', () => {
-    // show crack on ground with a little pop/shake
-    crackEl.classList.add('show');
+    eggBtn.style.position = 'fixed';
+    eggBtn.style.left = `${cx}px`;
+    eggBtn.style.top  = `${cy}px`;
+    eggBtn.style.transform = 'translate(-50%, -50%)';
+    eggBtn.style.zIndex = '6';
 
-    // swap to cat mode + play the roll
-    document.body.classList.add('cat-mode');
-    audio.currentTime = 0;
-    audio.volume = 0.9;
-    audio.play().catch(() => {
-      const n = document.createElement('button');
-      n.textContent = '▶ Play audio';
-      Object.assign(n.style, {
-        position:'fixed', bottom:'16px', left:'50%', transform:'translateX(-50%)',
-        padding:'10px 14px', borderRadius:'999px', border:'0',
-        background:'#a7f3d0', color:'#0b132a', fontWeight:'800', zIndex:9999
+    // Start combined animation
+    eggBtn.classList.add('fall');
+
+    eggBtn.addEventListener('animationend', () => {
+      // Show crack splash at bottom
+      crackEl.classList.add('show');
+
+      // Switch to tiled cat background and play audio
+      document.body.classList.add('cat-mode');
+      audio.currentTime = 0;
+      audio.volume = 0.9;
+      audio.play().catch(() => {
+        const n = document.createElement('button');
+        n.textContent = '▶ Play audio';
+        Object.assign(n.style, {
+          position:'fixed', bottom:'16px', left:'50%', transform:'translateX(-50%)',
+          padding:'10px 14px', borderRadius:'999px', border:'0',
+          background:'#a7f3d0', color:'#0b132a', fontWeight:'800', zIndex:9999
+        });
+        n.addEventListener('click', ()=>{ audio.play(); n.remove(); });
+        document.body.appendChild(n);
       });
-      n.addEventListener('click', ()=>{ audio.play(); n.remove(); });
-      document.body.appendChild(n);
-    });
-  }, { once:true });
-});
+    }, { once:true });
+  });
+}
