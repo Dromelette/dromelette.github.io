@@ -1,3 +1,4 @@
+/* style.css */
 /* Reset */
 *{box-sizing:border-box} html,body{height:100%;margin:0}
 
@@ -61,20 +62,21 @@ body.cat-mode{
   will-change: transform;
   transition: transform .12s ease;
 }
-.egg:hover{ transform: translateY(-2px) scale(1.02) }
-.egg:active{ transform: translateY(1px) scale(0.99) }
+.egg:not(.fall):hover{ transform: translateY(-2px) scale(1.02) }
+.egg:not(.fall):active{ transform: translateY(1px) scale(0.99) }
 .egg-svg{ filter: drop-shadow(0 25px 40px rgba(0,0,0,.35)); }
 .egg-hint{ position:absolute; bottom:-20px; left:50%; transform:translateX(-50%); font-size:12px; color:var(--muted) }
 
-/* Falling + crack */
+/* Single combined animation */
 .egg.fall{
   pointer-events:none;
-  animation: eggFall 1.15s cubic-bezier(.15,.7,.35,1) forwards,
-           eggSpin 1.15s cubic-bezier(.15,.7,.35,1) forwards;
+  animation: eggDrop 1.2s cubic-bezier(.15,.7,.35,1) forwards;
 }
-@keyframes eggFall{ to{ transform: translate3d(0, 120vh, 0) } }
-@keyframes eggSpin{ to{ transform: translate3d(0,120vh,0) rotate(720deg) } }
+@keyframes eggDrop{
+  to { transform: translate(-50%, calc(100vh + 200px)) rotate(760deg); }
+}
 
+/* Crack */
 .crack{
   position:fixed; left:50%; bottom:10px; transform:translateX(-50%) scale(0.9);
   opacity:0; pointer-events:none; z-index:5;
@@ -118,7 +120,7 @@ body.cat-mode{
 .work-card:hover{ transform: translateY(-3px); background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.15) }
 .work-card h3{ margin:0 0 6px; }
 
-/* Contact footer (simple, centered email) */
+/* Contact footer */
 .contact{
   padding:40px 20px; text-align:center; border-top:1px solid rgba(255,255,255,.08);
 }
@@ -127,13 +129,10 @@ body.cat-mode{
 
 /* Subpages */
 .page .brand{ position:sticky; top:0; background:linear-gradient(180deg, rgba(7,11,24,.85), rgba(7,11,24,0)); backdrop-filter: blur(8px); }
-.about, .resume{
-  margin:100px auto 40px; width:min(900px, 92vw); line-height:1.7;
-}
+.about, .resume{ margin:100px auto 40px; width:min(900px, 92vw); line-height:1.7; }
 .about-title{ font-size:clamp(32px,6vw,56px); margin:0 0 10px }
 .about-lead{ font-size:clamp(18px,2.5vw,22px); color:#dbeafe }
 .about-list{ padding-left:18px }
 .about-links{ margin-top:18px }
-
 .resume-title{ font-size:clamp(28px,5vw,44px); margin:0 0 10px }
 .resume-list{ padding-left:18px }
