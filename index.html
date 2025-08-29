@@ -2,273 +2,445 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Arjun Nemani — Résumé • Apps • DevOps • 3D</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Dr. Nemani — DevOps • Apps • 3D • Experiments</title>
 
-  <!-- Tailwind (CDN) -->
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Three.js (background) -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.161/build/three.min.js"></script>
 
   <style>
-    :root{ --bg:#070b18; --fg:#e5e7eb; --mint:#a7f3d0; --accent:#86efac; }
-    html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow-x:hidden}
-    #three-root{position:fixed;inset:0;z-index:-1}
-
-    /* Cat mode (tiled gif, not stretched) */
-    body.cat-mode{
-      background-image:url('cat.gif');
-      background-repeat:repeat;
-      background-size:200px auto;
-      animation:cats 30s linear infinite;
+    :root{
+      --egg-bg:#fff8dc; --yolk:#ffd400; --yolk-2:#ffea7a; --ink:#111;
     }
-    @keyframes cats{0%{background-position:0 0}100%{background-position:1000px 1000px}}
+    html,body{height:100%}
+    body{margin:0;background:var(--egg-bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow-x:hidden}
 
-    /* Crack splash */
-    .crack{position:fixed;left:50%;bottom:10px;transform:translateX(-50%) scale(.9);opacity:0;pointer-events:none;z-index:5}
-    .crack.show{animation:crackPop .45s ease-out forwards,screenShake .35s ease-in-out 1}
-    @keyframes crackPop{0%{opacity:0;transform:translateX(-50%) scale(.7)}100%{opacity:1;transform:translateX(-50%) scale(1)}}
-    @keyframes screenShake{0%,100%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% + 8px))}50%{transform:translateX(calc(-50% - 6px))}75%{transform:translateX(calc(-50% + 4px))}}
+    /* background */
+    #three-root{position:fixed;inset:0;z-index:-2;pointer-events:none}
+    #veil{position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at center, rgba(255,248,220,.80), rgba(255,248,220,.94))}
 
-    /* Egg interaction */
-    .egg.falling{pointer-events:none}
+    /* header */
+    .brand{background:rgba(255,255,255,.65);border:1px solid rgba(0,0,0,.08);backdrop-filter:blur(6px)}
+    .navlink{background:rgba(255,255,255,.6);border:1px solid rgba(0,0,0,.08);transition:.15s;white-space:nowrap}
+    .navlink:hover{transform:translateY(-1px);background:rgba(255,255,255,.85)}
+    .btn-outline{border:2px solid var(--ink);border-radius:9999px;padding:.45rem .9rem;font-weight:700;background:rgba(255,255,255,.6)}
 
-    /* Audio control bar */
-    .audio-ctrl{
-      position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
-      display:flex; gap:.6rem; align-items:center;
-      background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);
-      padding:.5rem .75rem; border-radius:999px; backdrop-filter:blur(8px); z-index:20;
+    /* links row */
+    .btn-yolk{background:var(--yolk);color:var(--ink);border-radius:9999px;font-weight:800;padding:.6rem 1rem;border:2px solid #00000010;transition:.12s;box-shadow:0 6px 20px rgba(0,0,0,.08)}
+    .btn-yolk:hover{background:var(--yolk-2);transform:translateY(-1px);box-shadow:0 10px 24px rgba(0,0,0,.12)}
+
+    /* hero egg */
+    .egg-btn{appearance:none;background:transparent;border:0;cursor:pointer;transition:transform .2s ease;will-change:transform}
+    .egg-btn:hover{transform:translateY(-2px) scale(1.02)}
+    .egg-shadow{filter:drop-shadow(0 25px 30px rgba(0,0,0,.18))}
+    .egg-half{position:fixed;width:clamp(120px, 28vw, 160px);height:clamp(150px, 36vw, 200px);left:50%;top:55%;transform:translate(-50%,-50%);z-index:6;pointer-events:none;opacity:0}
+
+    /* mini eggs */
+    #miniCluster{z-index:6}
+    .mini-egg{position:relative}
+    .mini-egg svg{pointer-events:none}
+    .mini-crack{position:absolute;inset:0;opacity:0;transition:opacity .15s}
+    .mini-egg:hover .mini-crack{opacity:.9}
+    .wiggle{animation:wiggle 1.3s ease-in-out infinite;transform-origin:50% 80%}
+    @keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}50%{transform:rotate(3.5deg)}75%{transform:rotate(-2deg)}}
+
+    /* chicks */
+    .chick{position:fixed;width:clamp(64px, 14vw, 100px);height:clamp(64px, 14vw, 100px);left:50%;top:20%;transform:translate(-50%,-50%);z-index:7;pointer-events:none}
+    .chick .body{filter:drop-shadow(0 10px 12px rgba(0,0,0,.22))}
+    .chick.dance{animation:bop .6s ease-in-out infinite}
+    @keyframes bop{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-54%) scale(1.06)}}
+
+    /* prank layers */
+    .prank-cover{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:0;background:radial-gradient(circle at center, rgba(255,212,0,.12), rgba(255,212,0,.22) 40%, rgba(0,0,0,.6));transition:opacity 1.4s ease}
+    .cat-tiles{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:0;background-image:url('cat.gif');background-repeat:repeat;background-size:200px auto;animation:cats 35s linear infinite;transition:opacity 1.8s ease}
+    @keyframes cats{0%{background-position:0 0}100%{background-position:1200px 1200px}}
+
+    /* fallback CSS anims */
+    .egg-tilt{animation:eggTilt .25s cubic-bezier(.2,.6,.3,1) forwards}
+    @keyframes eggTilt{
+      0%{transform:translate(-50%,-50%) rotate(0)}
+      100%{transform:translate(calc(-50% + 18px), calc(-50% + 26px)) rotate(-14deg)}
     }
-    .audio-ctrl button{background:var(--mint); color:#0b132a; font-weight:800; border:0; border-radius:999px; padding:.35rem .7rem}
-    .audio-ctrl input[type="range"]{accent-color:#86efac}
+    .halfL-slide{opacity:1;animation:halfL .7s cubic-bezier(.12,.58,.16,1) forwards}
+    .halfR-slide{opacity:1;animation:halfR .7s cubic-bezier(.12,.58,.16,1) forwards}
+    @keyframes halfL{
+      0%{transform:translate(-50%,-50%) rotate(-6deg)}
+      100%{transform:translate(calc(-50% - 140px), calc(-50% + 100px)) rotate(-24deg)}
+    }
+    @keyframes halfR{
+      0%{transform:translate(-50%,-50%) rotate(6deg)}
+      100%{transform:translate(calc(-50% + 140px), calc(-50% + 100px)) rotate(24deg)}
+    }
+    .cluster-show{animation:cluster .35s ease-out forwards}
+    @keyframes cluster{
+      0%{opacity:0;transform:translate(-50%,-46%) scale(.9)}
+      100%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+    }
+    .fade-out{animation:fadeout .4s ease forwards}
+    @keyframes fadeout{to{opacity:0;transform:translateY(10px)}}
+
+    /* Mobile tweaks */
+    @media (max-width:640px){
+      header nav{gap:.35rem}
+      .btn-outline{padding:.35rem .7rem;font-size:.85rem}
+      .navlink{padding:.35rem .6rem;font-size:.9rem}
+    }
   </style>
 </head>
 <body>
-
-  <!-- 3D background (auto-disables if THREE can’t load) -->
+  <!-- starfield -->
   <div id="three-root" aria-hidden="true"></div>
+  <div id="veil" aria-hidden="true"></div>
 
-  <!-- Header (only name + Résumé anchor) -->
+  <!-- header -->
   <header class="fixed top-3 left-1/2 -translate-x-1/2 w-[min(1100px,92vw)] flex items-center justify-between z-10">
-    <a href="#resume" class="text-white font-extrabold tracking-wide no-underline px-2 py-1 rounded-xl bg-white/5 backdrop-blur-md">Arjun&nbsp;Nemani</a>
+    <a href="https://www.instagram.com/dr.omlette/" class="brand px-3 py-2 rounded-xl font-black tracking-wide no-underline text-[var(--ink)]">Dr.&nbsp;Omelette</a>
+    <nav class="flex items-center gap-2">
+      <a href="resume.html" class="navlink px-3 py-2 rounded-full no-underline text-[var(--ink)]">Résumé</a>
+      <a href="https://www.linkedin.com/in/arjun-nemani/" target="_blank" rel="noopener" class="navlink px-3 py-2 rounded-full no-underline text-[var(--ink)]">LinkedIn</a>
+      <a href="https://www.instagram.com/dr.omlette/" target="_blank" rel="noopener" class="navlink px-3 py-2 rounded-full no-underline text-[var(--ink)]">Instagram</a>
+      <button id="audioToggle" class="btn-outline">🔊 Audio</button>
+    </nav>
   </header>
 
-  <!-- Hero -->
-  <section class="min-h-[70vh] grid place-items-center text-center pt-28 px-4">
-    <div class="flex flex-col items-center gap-6">
-      <h1 id="heroTitle" class="text-4xl sm:text-5xl md:text-7xl font-extrabold text-white leading-tight drop-shadow-2xl">
-        Do <em class="text-emerald-300 not-italic">not</em> touch the egg
-      </h1>
+  <main class="pt-28">
+    <!-- hero -->
+    <section class="min-h-[70vh] grid place-items-center text-center px-4">
+      <div class="flex flex-col items-center gap-6 max-w-3xl">
+        <h1 id="heroHed" class="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight">
+          Do <span class="underline decoration-[var(--yolk)] decoration-8 underline-offset-4">not</span> touch the egg
+        </h1>
 
-      <div class="relative grid place-items-center h-60 w-full">
-        <button id="eggBtn"
-          class="egg relative appearance-none bg-transparent cursor-pointer flex items-center justify-center transition-transform duration-200 will-change-transform hover:-translate-y-0.5 hover:scale-105"
-          aria-label="Do not touch the egg">
-          <svg class="w-[150px] h-[190px] drop-shadow-[0_25px_40px_rgba(0,0,0,0.35)]" viewBox="0 0 160 200" aria-hidden="true">
-            <defs>
-              <radialGradient id="yolk" cx="50%" cy="45%" r="45%">
-                <stop offset="0%" stop-color="#ffd54a"/><stop offset="100%" stop-color="#f59e0b"/>
-              </radialGradient>
-              <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#e5e7eb"/>
-              </linearGradient>
-            </defs>
-            <ellipse cx="80" cy="100" rx="60" ry="85" fill="url(#shell)" stroke="#cbd5e1" stroke-width="3"/>
-            <circle cx="100" cy="115" r="18" fill="url(#yolk)" opacity="0.9"/>
-          </svg>
-          <span class="absolute -bottom-5 left-1/2 -translate-x-1/2 text-xs text-gray-400">seriously, don’t…</span>
-        </button>
+        <div class="relative grid place-items-center h-[320px] w-full">
+          <!-- big egg -->
+          <button id="eggBtn" class="egg-btn" aria-label="Do not touch the egg">
+            <svg class="egg-shadow" width="clamp(120,35vw,160)" height="clamp(150,44vw,200)" viewBox="0 0 160 200" aria-hidden="true" style="width:clamp(120px,35vw,160px);height:clamp(150px,44vw,200px)">
+              <defs>
+                <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#f2efe6"/>
+                </linearGradient>
+                <radialGradient id="yolkG" cx="50%" cy="48%" r="45%">
+                  <stop offset="0%" stop-color="#ffe680"/><stop offset="100%" stop-color="#ffc400"/>
+                </radialGradient>
+              </defs>
+              <ellipse cx="80" cy="100" rx="60" ry="85" fill="url(#shell)" stroke="#d9d4c7" stroke-width="3"/>
+              <circle cx="100" cy="115" r="16" fill="url(#yolkG)" opacity="0.8"/>
+            </svg>
+          </button>
 
-        <!-- crack shown after drop -->
-        <div id="crack" class="crack" aria-hidden="true">
-          <svg viewBox="0 0 220 120" width="220" height="120">
-            <ellipse cx="110" cy="80" rx="90" ry="30" fill="rgba(0,0,0,.15)"/>
-            <g transform="translate(35,5)">
-              <path d="M70,0 C110,0 140,30 140,70 C140,95 120,110 70,110 C20,110 0,95 0,70 C0,30 30,0 70,0 z"
-                    fill="#fefefe" stroke="#cbd5e1" stroke-width="3"/>
-              <polyline points="35,20 50,45 65,30 80,55 95,40" fill="none" stroke="#b91c1c" stroke-width="3"/>
-            </g>
+          <!-- halves -->
+          <svg id="halfL" class="egg-half" viewBox="0 0 160 200" aria-hidden="true">
+            <defs><linearGradient id="shell2" x1="0" y="0" x2="0" y="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#f2efe6"/></linearGradient></defs>
+            <clipPath id="clipL"><rect x="0" y="0" width="80" height="200"/></clipPath>
+            <ellipse cx="80" cy="100" rx="60" ry="85" fill="url(#shell2)" stroke="#d9d4c7" stroke-width="3" clip-path="url(#clipL)"/>
           </svg>
+          <svg id="halfR" class="egg-half" viewBox="0 0 160 200" aria-hidden="true">
+            <defs><linearGradient id="shell3" x1="0" y="0" x2="0" y="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#f2efe6"/></linearGradient></defs>
+            <clipPath id="clipR"><rect x="80" y="0" width="80" height="200"/></clipPath>
+            <ellipse cx="80" cy="100" rx="60" ry="85" fill="url(#shell3)" stroke="#d9d4c7" stroke-width="3" clip-path="url(#clipR)"/>
+          </svg>
+
+          <!-- mini eggs cluster -->
+          <div id="miniCluster" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-4 sm:gap-6">
+            <!-- Egg #1 (spawns chicks) -->
+            <button class="mini-egg egg-btn wiggle" data-kind="chick" aria-label="Hatch chicks">
+              <svg width="clamp(70,18vw,100)" height="clamp(90,24vw,120)" viewBox="0 0 160 200" aria-hidden="true" style="width:clamp(70px,18vw,100px);height:clamp(90px,24vw,120px)">
+                <ellipse cx="80" cy="100" rx="60" ry="85" fill="#fffef9" stroke="#d9d4c7" stroke-width="3"/>
+              </svg>
+              <svg class="mini-crack" width="100" height="120" viewBox="0 0 220 120" aria-hidden="true">
+                <g transform="translate(35,5)"><polyline points="35,20 50,45 65,30 80,55 95,40" fill="none" stroke="#b91c1c" stroke-width="3"/></g>
+              </svg>
+            </button>
+            <!-- Egg #2 (spawns chicks) -->
+            <button class="mini-egg egg-btn wiggle" data-kind="chick" aria-label="Hatch chicks">
+              <svg width="clamp(70,18vw,100)" height="clamp(90,24vw,120)" viewBox="0 0 160 200" aria-hidden="true" style="width:clamp(70px,18vw,100px);height:clamp(90px,24vw,120px)">
+                <ellipse cx="80" cy="100" rx="60" ry="85" fill="#fffef9" stroke="#d9d4c7" stroke-width="3"/>
+              </svg>
+              <svg class="mini-crack" width="100" height="120" viewBox="0 0 220 120" aria-hidden="true">
+                <g transform="translate(35,5)"><polyline points="35,20 50,45 65,30 80,55 95,40" fill="none" stroke="#b91c1c" stroke-width="3"/></g>
+              </svg>
+            </button>
+            <!-- Egg #3 (prank) — yellow dot removed -->
+            <button class="mini-egg egg-btn wiggle" data-kind="prank" aria-label="Mystery egg">
+              <svg width="clamp(70,18vw,100)" height="clamp(90,24vw,120)" viewBox="0 0 160 200" aria-hidden="true" style="width:clamp(70px,18vw,100px);height:clamp(90px,24vw,120px)">
+                <ellipse cx="80" cy="100" rx="60" ry="85" fill="#fffef9" stroke="#d9d4c7" stroke-width="3"/>
+              </svg>
+              <svg class="mini-crack" width="100" height="120" viewBox="0 0 220 120" aria-hidden="true">
+                <g transform="translate(35,5)"><polyline points="35,20 50,45 65,30 80,55 95,40" fill="none" stroke="#b91c1c" stroke-width="3"/></g>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- links -->
+        <div class="flex flex-wrap justify-center gap-3">
+          <a class="btn-yolk no-underline" href="flipper.html">Game: Dr. Flipper</a>
+          <a class="btn-yolk no-underline" href="yo.html">Typing Tutor</a>
+          <a class="btn-yolk no-underline" href="Eggspert-guidlow.pdf" target="_blank" rel="noopener">Eggspert Guide (PDF)</a>
+          <a class="btn-yolk no-underline" href="https://www.linkedin.com/in/arjun-nemani/" target="_blank" rel="noopener">LinkedIn</a>
+          <a class="btn-yolk no-underline" href="https://www.instagram.com/dr.omlette/" target="_blank" rel="noopener">Instagram</a>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- Résumé (single page) -->
-  <main id="resume" class="max-w-4xl mx-auto px-5 pb-24">
-    <h2 class="text-3xl sm:text-4xl font-bold mb-6">Résumé</h2>
-
-    <section class="space-y-6">
-      <h3 class="text-2xl font-bold text-emerald-300">Experience</h3>
-      <ul class="list-disc list-inside space-y-4">
-        <li><strong class="text-white">DevOps / Project Engineer</strong> — BR IT Solutions<br><span class="text-gray-400 text-sm">CI/CD, cloud infra, monitoring, iOS/Android pipelines.</span></li>
-        <li><strong class="text-white">Founder / Product Builder</strong> — Apps & Experiments<br><span class="text-gray-400 text-sm">Flutter + Firebase (doctor booking, warehouse ops), web games/tools.</span></li>
-        <li><strong class="text-white">Grand-Chem Limited</strong> — Packaging ops & digital systems<br><span class="text-gray-400 text-sm">Internal tools, documentation automation, client portals.</span></li>
-      </ul>
     </section>
 
-    <section class="space-y-6 mt-10">
-      <h3 class="text-2xl font-bold text-emerald-300">Selected Projects</h3>
-      <ul class="list-disc list-inside space-y-2">
-        <li class="text-white"><span class="text-emerald-300 font-semibold">FindMyDoc</span> — Doctor discovery + booking (Flutter, Firestore, Auth).</li>
-        <li class="text-white"><span class="text-emerald-300 font-semibold">Warehouse Manager</span> — Stock movement & audit logs (Flutter, Firebase).</li>
-        <li class="text-white"><span class="text-emerald-300 font-semibold">Typing Tutor</span> — Live WPM/accuracy + charts (Web).</li>
-        <li class="text-white"><span class="text-emerald-300 font-semibold">Dr. Flipper</span> — Mobile tilt platformer (Web).</li>
-      </ul>
-    </section>
-
-    <section class="space-y-6 mt-10">
-      <h3 class="text-2xl font-bold text-emerald-300">Skills</h3>
-      <p class="text-gray-300">Flutter, Dart, Firebase (Auth/Firestore/Hosting), Three.js, JS/TS, HTML/CSS, CI/CD, GitHub Actions, Xcode/iOS builds, Android, Docker basics.</p>
-    </section>
-
-    <section class="space-y-6 mt-10">
-      <h3 class="text-2xl font-bold text-emerald-300">Links & Extras</h3>
-      <div class="flex flex-wrap gap-3">
-        <a class="px-4 py-2 bg-emerald-300 text-gray-950 font-bold rounded-full no-underline shadow-lg hover:-translate-y-0.5 hover:shadow-xl" href="flipper.html">Dr. Flipper</a>
-        <a class="px-4 py-2 bg-emerald-300 text-gray-950 font-bold rounded-full no-underline shadow-lg hover:-translate-y-0.5 hover:shadow-xl" href="yo.html">Typing Tutor</a>
-        <a class="px-4 py-2 bg-emerald-300 text-gray-950 font-bold rounded-full no-underline shadow-lg hover:-translate-y-0.5 hover:shadow-xl" href="Eggspert-guidlow.pdf" target="_blank" rel="noopener">Eggspert Guide (PDF)</a>
-        <a class="px-4 py-2 bg-emerald-300 text-gray-950 font-bold rounded-full no-underline shadow-lg hover:-translate-y-0.5 hover:shadow-xl" href="https://www.linkedin.com/in/arjun-nemani/" target="_blank" rel="noopener">LinkedIn</a>
-        <a class="px-4 py-2 bg-emerald-300 text-gray-950 font-bold rounded-full no-underline shadow-lg hover:-translate-y-0.5 hover:shadow-xl" href="mailto:dromelette2090@gmail.com">Email</a>
-      </div>
-    </section>
+    <!-- Instagram section (no third-party feed; clean + mobile friendly) -->
   </main>
 
-  <!-- Contact / footer -->
-  <footer class="py-10 px-5 text-center border-t border-white/10">
-    <p>Contact → <a href="mailto:dromelette2090@gmail.com" class="text-emerald-300 no-underline border-b border-dotted border-emerald-300/40 hover:border-emerald-300/90">dromelette2090@gmail.com</a></p>
+  <footer class="py-10 px-5 text-center border-t border-black/10">
+    <p>Contact → <a href="mailto:dromelette2090@gmail.com" class="underline decoration-[var(--yolk)] decoration-4 underline-offset-4">dromelette2090@gmail.com</a></p>
   </footer>
 
-  <!-- Audio + controls -->
-  <audio id="rickroll" preload="auto">
+  <!-- prank layers -->
+  <div id="prankCover" class="prank-cover" aria-hidden="true"></div>
+  <div id="catTiles" class="cat-tiles" aria-hidden="true"></div>
+
+  <!-- audio -->
+  <audio id="roll" preload="auto">
     <source src="roll.mp3" type="audio/mpeg"/>
   </audio>
-  <div id="audioCtrl" class="audio-ctrl hidden">
-    <button id="playPause">Play</button>
-    <label class="text-sm">Vol</label>
-    <input id="volume" type="range" min="0" max="1" step="0.01" value="0.9"/>
-  </div>
 
   <script>
-    /* ===== Robust loader for THREE (tries multiple CDNs, then degrades) ===== */
-    const CDNS = {
-      three: [
-        'https://unpkg.com/three@0.161.0/build/three.min.js',
-        'https://cdn.jsdelivr.net/npm/three@0.161/build/three.min.js'
-      ],
-      controls: [
-        'https://unpkg.com/three@0.161.0/examples/js/controls/OrbitControls.js',
-        'https://cdn.jsdelivr.net/npm/three@0.161/examples/js/controls/OrbitControls.js'
-      ]
-    };
-    function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.async=true;s.onload=res;s.onerror=()=>rej();document.head.appendChild(s);});}
-    async function ensureThree(){ if(window.THREE) return true; for(const u of CDNS.three){ try{ await loadScript(u); if(window.THREE) return true; }catch{} } return false; }
-    async function ensureCtrls(){ if(window.THREE?.OrbitControls) return true; for(const u of CDNS.controls){ try{ await loadScript(u); if(window.THREE?.OrbitControls) return true; }catch{} } return false; }
+    /* starfield (mobile-friendly density) */
+    (function initStarfield(){
+      try{
+        const host = document.getElementById('three-root');
+        const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+        renderer.setSize(innerWidth, innerHeight);
+        host.appendChild(renderer.domElement);
 
-    /* ===== Smooth 3D background (only if THREE loads) ===== */
-    async function initThree(){
-      if(!(await ensureThree())) return;
-      await ensureCtrls();
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(new THREE.Color('#0a0f22'), 0.028);
 
-      const root = document.getElementById('three-root');
-      const r = new THREE.WebGLRenderer({ antialias:true, alpha:true });
-      r.setPixelRatio(Math.min(devicePixelRatio,2)); r.setSize(innerWidth, innerHeight); root.appendChild(r.domElement);
-      const scene = new THREE.Scene(); scene.fog = new THREE.FogExp2(new THREE.Color('#0b1024'), 0.035);
-      const cam = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 200); cam.position.set(0,1.2,6);
+        const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, .1, 300);
+        camera.position.set(0, 1.2, 8);
 
-      const ctr = THREE.OrbitControls ? new THREE.OrbitControls(cam, r.domElement) : null;
-      if(ctr){ctr.enableDamping=true; ctr.enablePan=false; ctr.autoRotate=true; ctr.autoRotateSpeed=0.6; ctr.minDistance=3; ctr.maxDistance=10;}
+        const COUNT = (innerWidth < 640) ? 1200 : 2200;
+        const g = new THREE.BufferGeometry();
+        const pos = new Float32Array(COUNT*3);
+        for (let i=0;i<COUNT;i++){
+          const r = 36*Math.pow(Math.random(), .55);
+          const th = Math.random()*Math.PI*2;
+          const ph = Math.acos(2*Math.random()-1);
+          pos[i*3+0]=r*Math.sin(ph)*Math.cos(th);
+          pos[i*3+1]=r*Math.cos(ph)*.55;
+          pos[i*3+2]=r*Math.sin(ph)*Math.sin(th);
+        }
+        g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+        const m = new THREE.PointsMaterial({ color:0x111111, size:.02, transparent:true, opacity:.85 });
+        const stars = new THREE.Points(g,m); scene.add(stars);
 
-      const COUNT=1400, geom=new THREE.BufferGeometry(), pos=new Float32Array(COUNT*3);
-      for(let i=0;i<COUNT;i++){const rad=18*Math.pow(Math.random(),.6), th=Math.random()*Math.PI*2, ph=Math.acos(2*Math.random()-1);
-        pos[i*3]=rad*Math.sin(ph)*Math.cos(th); pos[i*3+1]=rad*Math.cos(ph)*.6; pos[i*3+2]=rad*Math.sin(ph)*Math.sin(th);}
-      geom.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
-      const stars=new THREE.Points(geom,new THREE.PointsMaterial({color:0x86efac,size:.02,transparent:true,opacity:.9})); scene.add(stars);
-      const knot=new THREE.Mesh(new THREE.TorusKnotGeometry(.8,.25,200,32),new THREE.MeshStandardMaterial({color:0xa7f3d0,metalness:.2,roughness:.25})); scene.add(knot);
-      scene.add(new THREE.AmbientLight(0xffffff,.6)); const d=new THREE.DirectionalLight(0xffffff,1.2); d.position.set(3,3,4); scene.add(d);
+        const clock = new THREE.Clock();
+        (function tick(){
+          const t = clock.getElapsedTime();
+          stars.rotation.y = t*0.02;
+          renderer.render(scene, camera);
+          requestAnimationFrame(tick);
+        })();
 
-      const clock=new THREE.Clock();
-      (function tick(){ const t=clock.getElapsedTime(); stars.rotation.y=t*.02; knot.rotation.x=t*.35; knot.rotation.y=t*.25;
-        ctr?.update(); r.render(scene,cam); requestAnimationFrame(tick); })();
-      addEventListener('resize',()=>{r.setSize(innerWidth,innerHeight); cam.aspect=innerWidth/innerHeight; cam.updateProjectionMatrix();});
+        addEventListener('resize', ()=>{
+          renderer.setSize(innerWidth, innerHeight);
+          camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+        });
+      }catch(e){ console.warn('[Starfield disabled]', e); }
+    })();
+
+    /* audio */
+    const roll = document.getElementById('roll');
+    const audioToggle = document.getElementById('audioToggle');
+    let audioWanted = true;
+    audioToggle.addEventListener('click', ()=>{
+      audioWanted = !audioWanted;
+      audioToggle.textContent = audioWanted ? '🔊 Audio' : '🔇 Audio';
+      if (!audioWanted) roll.pause();
+    });
+    function playRollSoftly(){
+      if (!audioWanted) return;
+      roll.volume = 0; roll.currentTime = 0;
+      const p = roll.play(); 
+      if (p && p.catch) {
+        p.catch(()=>showPlayNudge());
+      }
+      let i=0, steps=20; const iv=setInterval(()=>{ i++; roll.volume=Math.min(.9, i/steps*.9); if(i>=steps) clearInterval(iv); },80);
+    }
+    function showPlayNudge(){
+      const n = document.createElement('button');
+      n.textContent = '▶ Play audio';
+      Object.assign(n.style,{
+        position:'fixed',bottom:'16px',left:'50%',transform:'translateX(-50%)',
+        padding:'10px 14px',borderRadius:'999px',border:'0',
+        background:'#ffd400',color:'#0b132a',fontWeight:'800',zIndex:9999
+      });
+      n.addEventListener('click',()=>{ roll.play(); n.remove(); });
+      document.body.appendChild(n);
     }
 
-    /* ===== Egg drop (super smooth: transform-only, via a fixed carrier + WAAPI) ===== */
-    const heroTitle = document.getElementById('heroTitle');
-    const eggBtn    = document.getElementById('eggBtn');
-    const crackEl   = document.getElementById('crack');
-    const audio     = document.getElementById('rickroll');
-    const ctrlBar   = document.getElementById('audioCtrl');
-    const playBtn   = document.getElementById('playPause');
-    const volSlider = document.getElementById('volume');
+    /* main egg sequence */
+    const eggBtn  = document.getElementById('eggBtn');
+    const halfL   = document.getElementById('halfL');
+    const halfR   = document.getElementById('halfR');
+    const cluster = document.getElementById('miniCluster');
+    const heroHed = document.getElementById('heroHed');
+    const prankCover = document.getElementById('prankCover');
+    const catTiles   = document.getElementById('catTiles');
 
-    let dropping = false;
-
-    playBtn.addEventListener('click', async ()=>{
-      if (audio.paused) { try{ await audio.play(); playBtn.textContent='Pause'; }catch{} }
-      else { audio.pause(); playBtn.textContent='Play'; }
-    });
-    volSlider.addEventListener('input', ()=>{ audio.volume = +volSlider.value; });
-
+    let hatched = false;
     eggBtn.addEventListener('click', async ()=>{
-      if (dropping) return; dropping = true;
+      if (hatched) return; hatched = true;
+      heroHed.innerHTML = "Uh oh… you hatched it <span class='text-[var(--yolk)]'>🥚</span>";
 
-      // Change the heading
-      heroTitle.innerHTML = `You were warned <span class="not-italic">😼</span>`;
-
-      // Measure and create a GPU-friendly "carrier" wrapper we can translate
       const r = eggBtn.getBoundingClientRect();
-      const cx = r.left + r.width / 2;
-      const cy = r.top  + r.height / 2;
-      const distance = (innerHeight + 200) - cy;
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      Object.assign(eggBtn.style, { position:'fixed', left:`${cx}px`, top:`${cy}px`, transform:'translate(-50%,-50%)', zIndex:6 });
 
-      const carrier = document.createElement('div');
-      Object.assign(carrier.style,{
-        position:'fixed', left:`${cx}px`, top:`${cy}px`,
-        transform:'translate(-50%,-50%)', willChange:'transform', zIndex:6
-      });
-      eggBtn.classList.add('falling');
-      eggBtn.style.transform = 'none'; // rotation will be applied directly
-      carrier.appendChild(eggBtn);
-      document.body.appendChild(carrier);
+      const canWAAPI = !!eggBtn.animate;
 
-      // Two animations: (1) carrier translateY (2) egg rotation
-      const fall = carrier.animate(
-        [
-          { transform:`translate(-50%,-50%)` },
-          { transform:`translate(-50%, calc(-50% + ${distance}px))` }
-        ],
-        {
-          // very smooth spring-ish easing (ease-out quint-ish)
-          duration: 1600,
-          easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-          fill: 'forwards'
-        }
-      );
-      const spin = eggBtn.animate(
-        [{ transform:'rotate(0deg)' }, { transform:'rotate(900deg)' }],
-        { duration: 1600, easing: 'cubic-bezier(0.23, 1, 0.32, 1)', fill:'forwards' }
-      );
+      if (canWAAPI){
+        await eggBtn.animate(
+          [{ transform:'translate(-50%,-50%) rotate(0deg)' },
+           { transform:'translate(calc(-50% + 18px), calc(-50% + 26px)) rotate(-14deg)' }],
+          { duration:250, easing:'cubic-bezier(.2,.6,.3,1)', fill:'forwards' }
+        ).finished;
+      }else{
+        eggBtn.classList.add('egg-tilt');
+        await new Promise(res=>setTimeout(res, 260));
+      }
 
-      await Promise.allSettled([fall.finished, spin.finished]);
+      eggBtn.style.opacity = 0;
+      if (canWAAPI){
+        halfL.style.opacity = 1; halfR.style.opacity = 1;
+        await Promise.all([
+          halfL.animate(
+            [{ transform:'translate(-50%,-50%) rotate(-6deg)' },
+             { transform:'translate(calc(-50% - 140px), calc(-50% + 100px)) rotate(-24deg)' }],
+            { duration:700, easing:'cubic-bezier(.12,.58,.16,1)', fill:'forwards' }
+          ).finished,
+          halfR.animate(
+            [{ transform:'translate(-50%,-50%) rotate(6deg)' },
+             { transform:'translate(calc(-50% + 140px), calc(-50% + 100px)) rotate(24deg)' }],
+            { duration:700, easing:'cubic-bezier(.12,.58,.16,1)', fill:'forwards' }
+          ).finished
+        ]);
+      }else{
+        halfL.classList.add('halfL-slide'); halfR.classList.add('halfR-slide');
+        await new Promise(res=>setTimeout(res, 720));
+      }
 
-      // Show crack + cat background + audio controls
-      crackEl.classList.add('show');
-      document.body.classList.add('cat-mode');
+      cluster.classList.remove('hidden');
+      if (canWAAPI){
+        await cluster.animate(
+          [{ opacity:0, transform:'translate(-50%,-46%) scale(.9)' }, { opacity:1, transform:'translate(-50%,-50%) scale(1)' }],
+          { duration:350, easing:'ease-out', fill:'forwards' }
+        ).finished;
+      }else{
+        cluster.classList.add('cluster-show');
+        await new Promise(res=>setTimeout(res, 360));
+      }
 
-      ctrlBar.classList.remove('hidden');
-      audio.currentTime = 0;
-      audio.volume = +volSlider.value;
-
-      // Try to autoplay after a user gesture (should succeed on most browsers)
-      try { await audio.play(); playBtn.textContent='Pause'; }
-      catch { /* browser blocked, user can click Play */ }
+      // remove big shells
+      halfL.classList.add('fade-out'); halfR.classList.add('fade-out');
+      setTimeout(()=>{ halfL.remove(); halfR.remove(); }, 420);
     });
 
-    // Boot
-    (async function(){
-      await initThree();
-    })();
+    /* chicks / prank */
+    const chicks = [];
+    function spawnChick(x,y){
+      const d = document.createElement('div');
+      d.className = 'chick';
+      d.style.left = x+'px'; d.style.top = y+'px';
+      d.innerHTML = `
+        <svg class="body" viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true">
+          <defs><radialGradient id="chY" cx="50%" cy="40%" r="60%"><stop offset="0%" stop-color="#fff07a"/><stop offset="100%" stop-color="#ffd400"/></radialGradient></defs>
+          <circle cx="50" cy="52" r="30" fill="url(#chY)" stroke="#111" stroke-width="2"/>
+          <path d="M48 22 q4 -8 10 0" stroke="#111" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <circle cx="42" cy="50" r="3.2" fill="#111"/><circle cx="58" cy="50" r="3.2" fill="#111"/>
+          <polygon points="50,56 60,60 50,64" fill="#ff7b00" stroke="#111" stroke-width="1"/>
+          <path d="M43 78 v12 M57 78 v12" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      `;
+      document.body.appendChild(d);
+      return d;
+    }
+    function fallToGround(el){
+      const start = el.getBoundingClientRect().top;
+      const endTop = innerHeight - 70;
+      if (el.animate){
+        return el.animate(
+          [{ transform:'translate(-50%,-50%) rotate(0deg)', top:`${start}px` },
+           { transform:'translate(-50%,-50%) rotate(18deg)', top:`${endTop}px` }],
+          { duration:900, easing:'cubic-bezier(.15,.7,.35,1)', fill:'forwards' }
+        ).finished;
+      }else{
+        el.style.top = endTop+'px';
+        return new Promise(r=>setTimeout(r, 910));
+      }
+    }
+    function wander(el){
+      let alive = true;
+      function hop(){
+        if (!alive) return;
+        const x = Math.max(50, Math.min(innerWidth-50, Math.random()*innerWidth));
+        const y = Math.max(innerHeight-160, innerHeight-130 + (Math.random()*14-7));
+        el.style.transition = 'transform .9s ease-in-out, left .9s ease-in-out, top .9s ease-in-out';
+        el.style.left = x + 'px'; el.style.top = y + 'px';
+        setTimeout(hop, 1200 + Math.random()*1200);
+      }
+      hop();
+      return ()=>{ alive=false; };
+    }
+    function setChickDance(on){ chicks.forEach(c => c.classList.toggle('dance', !!on)); }
+
+    // make the whole cluster area clickable for reliable taps
+    cluster.addEventListener('click', async (e)=>{
+      const btn = e.target.closest('.mini-egg');
+      if (!btn || btn.dataset.opened === '1') return;
+      btn.dataset.opened = '1';
+      const kind = btn.getAttribute('data-kind');
+
+      // click animation
+      if (btn.animate){
+        await btn.animate(
+          [{ transform:'translateY(0) rotate(0)' }, { transform:'translateY(-6px) rotate(-8deg)' }, { transform:'translateY(0) rotate(0)' }],
+          { duration:220, easing:'cubic-bezier(.3,.7,.1,1)' }
+        ).finished;
+      }
+
+      const r = btn.getBoundingClientRect();
+      const baseX = r.left + r.width/2;
+      const baseY = r.top + r.height/2;
+
+      // "open" mini egg
+      btn.style.pointerEvents = 'none';
+      if (btn.animate){
+        await btn.animate(
+          [{ opacity:1, transform:'scale(1)' }, { opacity:0, transform:'scale(.6) translateY(6px)' }],
+          { duration:220, easing:'ease-in', fill:'forwards' }
+        ).finished;
+      } else { btn.style.opacity = 0; }
+
+      if (kind === 'chick'){
+        for (let i=0;i<5;i++){
+          const jitterX = baseX + (Math.random()*60-30);
+          const jitterY = baseY + (Math.random()*20-10);
+          const chick = spawnChick(jitterX, jitterY);
+          chicks.push(chick);
+          await new Promise(r=>setTimeout(r, 70));
+          await fallToGround(chick);
+          wander(chick);
+        }
+      } else if (kind === 'prank'){
+        prankCover.style.opacity = 1;
+        catTiles.style.opacity   = 1;
+        setChickDance(true);
+        playRollSoftly();
+      }
+
+      setTimeout(()=>btn.remove(), 300);
+    });
+
+    addEventListener('beforeunload', ()=>roll.pause());
   </script>
 </body>
 </html>
