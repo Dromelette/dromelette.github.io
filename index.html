@@ -1,45 +1,96 @@
-<!-- about.html -->
+<!-- index.html -->
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width"/>
-  <title>About — Arjun Nemani</title>
-  <link rel="stylesheet" href="style.css"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Arjun Nemani — DevOps • Apps • 3D • Experiments</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/three@0.161/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.161/examples/js/controls/OrbitControls.js"></script>
 </head>
-<body class="page">
+<body>
+  <div id="three-root" aria-hidden="true"></div>
+
   <header class="brand">
     <a href="index.html" class="logo">Arjun&nbsp;Nemani</a>
     <nav class="links">
 
-      <a aria-current="page">About</a>
+      <a href="about.html">About</a>
       <a href="resume.html">Résumé</a>
 
     </nav>
   </header>
 
-  <main class="about">
-    <h1 class="about-title">Hi, I’m Arjun.</h1>
-    <p class="about-lead">
-      I build <strong>DevOps</strong> pipelines, <strong>Flutter</strong> apps, and playful
-      <strong>web/3D experiments</strong>. I like to mix utility with mischief (see the egg).
-    </p>
+  <main class="hero">
+    <div class="stack">
+      <h1 class="title">Do <em>not</em> touch the egg</h1>
 
-    <ul class="about-list">
-      <li>🔧 DevOps & Cloud — CI/CD, Firebase, Firestore, iOS/Android builds, monitoring.</li>
-      <li>📱 Flutter apps — doctor booking, warehouse ops, dashboards.</li>
-      <li>🧪 Web experiments — Three.js visuals, interactive games, teaching tools.</li>
-    </ul>
+      <div class="egg-wrap" id="eggWrap">
+        <button class="egg" id="eggBtn" aria-label="Do not touch the egg">
+          <svg class="egg-svg" viewBox="0 0 160 200" width="150" height="190" aria-hidden="true">
+            <defs>
+              <radialGradient id="yolk" cx="50%" cy="45%" r="45%">
+                <stop offset="0%" stop-color="#ffd54a"/>
+                <stop offset="100%" stop-color="#f59e0b"/>
+              </radialGradient>
+              <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="100%" stop-color="#e5e7eb"/>
+              </linearGradient>
+            </defs>
+            <ellipse cx="80" cy="100" rx="60" ry="85" fill="url(#shell)" stroke="#cbd5e1" stroke-width="3"/>
+            <circle cx="100" cy="115" r="18" fill="url(#yolk)" opacity="0.9"/>
+          </svg>
+          <span class="egg-hint">seriously, don’t…</span>
+        </button>
 
-    <p class="about-links">
-      <a class="chip" href="https://www.linkedin.com/in/arjun-nemani/" target="_blank" rel="noopener">LinkedIn</a>
-      <a class="chip" href="index.html#work">See my work</a>
-      <a class="chip" href="resume.html">Résumé</a>
-    </p>
+        <div class="crack" id="crack" aria-hidden="true">
+          <svg viewBox="0 0 220 120" width="220" height="120">
+            <ellipse cx="110" cy="80" rx="90" ry="30" fill="rgba(0,0,0,.15)"/>
+            <g transform="translate(35,5)">
+              <path d="M70,0 C110,0 140,30 140,70 C140,95 120,110 70,110 C20,110 0,95 0,70 C0,30 30,0 70,0 z"
+                    fill="#fefefe" stroke="#cbd5e1" stroke-width="3"/>
+              <polyline points="35,20 50,45 65,30 80,55 95,40" fill="none" stroke="#b91c1c" stroke-width="3"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="cta-row">
+        <a class="chip" href="flipper.html">Game: Dr. Flipper</a>
+        <a class="chip" href="Eggspert-guidlow.pdf" target="_blank" rel="noopener">Eggspert Guide (PDF)</a>
+        <a class="chip" href="yo.html">Typing Tutor</a>
+      </div>
+    </div>
   </main>
 
-  <footer class="contact">
+  <section id="work" class="work">
+    <h2>Selected Work</h2>
+    <div class="work-grid">
+      <a class="work-card" href="flipper.html">
+        <h3>Dr. Flipper</h3>
+        <p>Arcade platformer with tilt/mobile controls.</p>
+      </a>
+      <a class="work-card" href="yo.html">
+        <h3>Typing Tutor</h3>
+        <p>WPM & accuracy with live charts.</p>
+      </a>
+      <a class="work-card" href="https://dromelette.github.io/" target="_blank" rel="noopener">
+        <h3>Portfolio (v1)</h3>
+        <p>Original playful experiments page.</p>
+      </a>
+    </div>
+  </section>
+
+  <footer id="contact" class="contact">
     <p>Contact → <a href="mailto:dromelette2090@gmail.com">dromelette2090@gmail.com</a></p>
   </footer>
+
+  <audio id="rickroll" preload="auto">
+    <source src="roll.mp3" type="audio/mpeg" />
+  </audio>
+
+  <script src="script.js"></script>
 </body>
 </html>
