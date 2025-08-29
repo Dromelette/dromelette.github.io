@@ -1,104 +1,332 @@
-<!-- index.html -->
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Arjun Nemani — DevOps • Apps • 3D • Experiments</title>
-  <link rel="stylesheet" href="style.css" />
-  <!-- Three.js (pinned UMD) -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.161/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.161/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root{ --bg:#070b18; --fg:#e5e7eb; }
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow-x:hidden}
+    #three-root{position:fixed;inset:0;z-index:-1}
+    body.cat-mode{background-image:url('cat.gif');background-repeat:repeat;background-size:200px auto;
+      animation:cats 30s linear infinite}
+    @keyframes cats{0%{background-position:0 0}100%{background-position:1000px 1000px}}
+    .crack{position:fixed;left:50%;bottom:10px;transform:translateX(-50%) scale(.9);opacity:0;pointer-events:none;z-index:5}
+    .crack.show{animation:crackPop .45s ease-out forwards,screenShake .35s ease-in-out 1}
+    @keyframes crackPop{0%{opacity:0;transform:translateX(-50%) scale(.7)}100%{opacity:1;transform:translateX(-50%) scale(1)}}
+    @keyframes screenShake{0%,100%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% + 8px))}
+      50%{transform:translateX(calc(-50% - 6px))}75%{transform:translateX(calc(-50% + 4px))}}
+    .egg.falling{pointer-events:none}
+  </style>
 </head>
-<body>
+<body class="bg-gray-950 text-gray-200">
+
   <!-- 3D background -->
   <div id="three-root" aria-hidden="true"></div>
 
   <!-- Header -->
-  <header class="brand">
-    <a href="index.html" class="logo">Arjun&nbsp;Nemani</a>
-    <nav class="links">
-
-      <a href="about.html">About</a>
-      <a href="resume.html">Résumé</a>
-
+  <header class="fixed top-3 left-1/2 -translate-x-1/2 w-[min(1100px,92vw)] flex items-center justify-between z-10">
+    <a href="#home" class="text-white font-extrabold tracking-wide no-underline px-2 py-1 rounded-xl bg-white/5 backdrop-blur-md">Arjun&nbsp;Nemani</a>
+    <nav class="flex items-center gap-3">
+      <a href="#work"   class="text-white no-underline px-3 py-2 rounded-full bg-white/5 hover:bg-white/10">Work</a>
+      <a href="#about"  class="text-white no-underline px-3 py-2 rounded-full bg-white/5 hover:bg-white/10">About</a>
+      <a href="#resume" class="text-white no-underline px-3 py-2 rounded-full bg-white/5 hover:bg-white/10">Résumé</a>
+      <a href="#contact" class="text-white no-underline px-3 py-2 rounded-full bg-white/5 hover:bg-white/10">Contact</a>
     </nav>
   </header>
 
-  <!-- Hero -->
-  <main class="hero">
-    <div class="stack">
-      <h1 class="title">Do <em>not</em> touch the egg</h1>
+  <!-- SPA mount -->
+  <main id="app-root"></main>
 
-      <div class="egg-wrap" id="eggWrap">
-        <button class="egg" id="eggBtn" aria-label="Do not touch the egg">
-          <svg class="egg-svg" viewBox="0 0 160 200" width="150" height="190" aria-hidden="true">
-            <defs>
-              <radialGradient id="yolk" cx="50%" cy="45%" r="45%">
-                <stop offset="0%" stop-color="#ffd54a"/>
-                <stop offset="100%" stop-color="#f59e0b"/>
-              </radialGradient>
-              <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#ffffff"/>
-                <stop offset="100%" stop-color="#e5e7eb"/>
-              </linearGradient>
-            </defs>
-            <ellipse cx="80" cy="100" rx="60" ry="85" fill="url(#shell)" stroke="#cbd5e1" stroke-width="3"/>
-            <circle cx="100" cy="115" r="18" fill="url(#yolk)" opacity="0.9"/>
-          </svg>
-          <span class="egg-hint">seriously, don’t…</span>
-        </button>
-
-        <!-- crack shown after fall -->
-        <div class="crack" id="crack" aria-hidden="true">
-          <svg viewBox="0 0 220 120" width="220" height="120">
-            <ellipse cx="110" cy="80" rx="90" ry="30" fill="rgba(0,0,0,.15)"/>
-            <g transform="translate(35,5)">
-              <path d="M70,0 C110,0 140,30 140,70 C140,95 120,110 70,110 C20,110 0,95 0,70 C0,30 30,0 70,0 z"
-                    fill="#fefefe" stroke="#cbd5e1" stroke-width="3"/>
-              <polyline points="35,20 50,45 65,30 80,55 95,40" fill="none" stroke="#b91c1c" stroke-width="3"/>
-            </g>
-          </svg>
-        </div>
-      </div>
-
-      <div class="cta-row">
-        <a class="chip" href="flipper.html">Game: Dr. Flipper</a>
-        <a class="chip" href="Eggspert-guidlow.pdf" target="_blank" rel="noopener">Eggspert Guide (PDF)</a>
-        <a class="chip" href="yo.html">Typing Tutor</a>
-      </div>
-    </div>
-  </main>
-
-  <!-- Work -->
-  <section id="work" class="work">
-    <h2>Selected Work</h2>
-    <div class="work-grid">
-      <a class="work-card" href="flipper.html">
-        <h3>Dr. Flipper</h3>
-        <p>Arcade platformer with tilt/mobile controls.</p>
-      </a>
-      <a class="work-card" href="yo.html">
-        <h3>Typing Tutor</h3>
-        <p>WPM & accuracy with live charts.</p>
-      </a>
-      <a class="work-card" href="https://dromelette.github.io/" target="_blank" rel="noopener">
-        <h3>Portfolio (v1)</h3>
-        <p>Original playful experiments page.</p>
-      </a>
-    </div>
-  </section>
-
-  <!-- Contact -->
-  <footer id="contact" class="contact">
-    <p>Contact → <a href="mailto:dromelette2090@gmail.com">dromelette2090@gmail.com</a></p>
+  <!-- Footer / Contact -->
+  <footer id="contact" class="py-10 px-5 text-center border-t border-gray-700/50 mt-10">
+    <p>Contact → <a href="mailto:dromelette2090@gmail.com" class="text-emerald-300 no-underline border-b border-dotted border-emerald-300/40 hover:border-emerald-300/90">dromelette2090@gmail.com</a></p>
   </footer>
 
-  <!-- Prank audio -->
+  <!-- Audio (use your local roll.mp3) -->
   <audio id="rickroll" preload="auto">
-    <source src="roll.mp3" type="audio/mpeg" />
+    <source src="roll.mp3" type="audio/mpeg"/>
   </audio>
 
-  <script src="script.js"></script>
+  <script>
+    /* ===== Robust loader for THREE + OrbitControls (tries multiple CDNs, then degrades) ===== */
+    const CDNS = {
+      three: [
+        'https://unpkg.com/three@0.161.0/build/three.min.js',
+        'https://cdn.jsdelivr.net/npm/three@0.161/build/three.min.js'
+      ],
+      controls: [
+        'https://unpkg.com/three@0.161.0/examples/js/controls/OrbitControls.js',
+        'https://cdn.jsdelivr.net/npm/three@0.161/examples/js/controls/OrbitControls.js'
+      ]
+    };
+
+    function loadScript(src){
+      return new Promise((resolve, reject)=>{
+        const s = document.createElement('script');
+        s.src = src; s.async = true; s.onload = resolve;
+        s.onerror = ()=>reject(new Error('Failed '+src));
+        document.head.appendChild(s);
+      });
+    }
+
+    async function ensureThree(){
+      if (window.THREE) return true;
+      for (const url of CDNS.three){
+        try { await loadScript(url); if (window.THREE) return true; } catch(e){}
+      }
+      console.warn('[THREE] Could not load from CDNs. Background will be disabled.');
+      return false;
+    }
+
+    async function ensureControls(){
+      if (window.THREE?.OrbitControls) return true;
+      for (const url of CDNS.controls){
+        try { await loadScript(url); if (window.THREE?.OrbitControls) return true; } catch(e){}
+      }
+      console.warn('[THREE] OrbitControls not available. Continuing without controls.');
+      return false;
+    }
+
+    /* ===== Three.js starfield (runs only if THREE loaded) ===== */
+    async function initThree(){
+      const ok = await ensureThree();
+      if (!ok) return;             // graceful: skip 3D if blocked offline/extension
+      await ensureControls();      // optional
+
+      const root = document.getElementById('three-root');
+      const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.setSize(innerWidth, innerHeight);
+      root.appendChild(renderer.domElement);
+
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(new THREE.Color('#0b1024'), 0.035);
+
+      const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 200);
+      camera.position.set(0, 1.2, 6);
+
+      let controls = null;
+      if (THREE.OrbitControls){
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; controls.enablePan = false;
+        controls.autoRotate = true; controls.autoRotateSpeed = 0.6;
+        controls.minDistance = 3; controls.maxDistance = 10;
+      }
+
+      const COUNT = 1400;
+      const geom = new THREE.BufferGeometry();
+      const pos = new Float32Array(COUNT*3);
+      for (let i=0;i<COUNT;i++){
+        const r = 18*Math.pow(Math.random(), .6);
+        const th=Math.random()*Math.PI*2, ph=Math.acos(2*Math.random()-1);
+        pos[i*3+0]=r*Math.sin(ph)*Math.cos(th);
+        pos[i*3+1]=r*Math.cos(ph)*.6;
+        pos[i*3+2]=r*Math.sin(ph)*Math.sin(th);
+      }
+      geom.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+      const stars = new THREE.Points(geom, new THREE.PointsMaterial({ color:0x86efac, size:.02, transparent:true, opacity:.9 }));
+      scene.add(stars);
+
+      const knot = new THREE.Mesh(
+        new THREE.TorusKnotGeometry(0.8,0.25,200,32),
+        new THREE.MeshStandardMaterial({ color:0xa7f3d0, metalness:.2, roughness:.25 })
+      );
+      scene.add(knot);
+
+      scene.add(new THREE.AmbientLight(0xffffff,.6));
+      const dir = new THREE.DirectionalLight(0xffffff,1.2); dir.position.set(3,3,4); scene.add(dir);
+
+      const clock = new THREE.Clock();
+      (function tick(){
+        const t = clock.getElapsedTime();
+        stars.rotation.y = t*.02; knot.rotation.x = t*.35; knot.rotation.y = t*.25;
+        controls?.update(); renderer.render(scene,camera); requestAnimationFrame(tick);
+      })();
+
+      addEventListener('resize',()=>{
+        renderer.setSize(innerWidth, innerHeight);
+        camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+      });
+    }
+
+    /* ===== SPA pages ===== */
+    const appRoot = document.getElementById('app-root');
+    const pages = {
+      home: `
+        <section class="min-h-screen grid place-items-center text-center p-4 pt-24">
+          <div class="flex flex-col items-center gap-6">
+            <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold text-white leading-tight drop-shadow-2xl">
+              Do <em class="text-emerald-300 not-italic">not</em> touch the egg
+            </h1>
+
+            <div class="relative grid place-items-center h-60 w-full">
+              <button id="eggBtn"
+                class="egg relative appearance-none bg-transparent cursor-pointer flex items-center justify-center transition-all duration-200 will-change-transform hover:-translate-y-0.5 hover:scale-105"
+                aria-label="Do not touch the egg">
+                <svg class="w-[150px] h-[190px] drop-shadow-[0_25px_40px_rgba(0,0,0,0.35)]" viewBox="0 0 160 200" aria-hidden="true">
+                  <defs>
+                    <radialGradient id="yolk" cx="50%" cy="45%" r="45%">
+                      <stop offset="0%" stop-color="#ffd54a"/><stop offset="100%" stop-color="#f59e0b"/>
+                    </radialGradient>
+                    <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#e5e7eb"/>
+                    </linearGradient>
+                  </defs>
+                  <ellipse cx="80" cy="100" rx="60" ry="85" fill="url(#shell)" stroke="#cbd5e1" stroke-width="3"/>
+                  <circle cx="100" cy="115" r="18" fill="url(#yolk)" opacity="0.9"/>
+                </svg>
+                <span class="absolute -bottom-5 left-1/2 -translate-x-1/2 text-xs text-gray-400">seriously, don’t…</span>
+              </button>
+
+              <div id="crack" class="crack" aria-hidden="true">
+                <svg viewBox="0 0 220 120" width="220" height="120">
+                  <ellipse cx="110" cy="80" rx="90" ry="30" fill="rgba(0,0,0,.15)"/>
+                  <g transform="translate(35,5)">
+                    <path d="M70,0 C110,0 140,30 140,70 C140,95 120,110 70,110 C20,110 0,95 0,70 C0,30 30,0 70,0 z"
+                          fill="#fefefe" stroke="#cbd5e1" stroke-width="3"/>
+                    <polyline points="35,20 50,45 65,30 80,55 95,40" fill="none" stroke="#b91c1c" stroke-width="3"/>
+                  </g>
+                </svg>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-3 mt-2">
+              <a class="px-4 py-2 bg-emerald-300 text-gray-950 font-bold rounded-full no-underline shadow-lg hover:-translate-y-0.5 hover:shadow-xl" href="flipper.html">Game: Dr. Flipper</a>
+              <a class="px-4 py-2 bg-emerald-300 text-gray-950 font-bold rounded-full no-underline shadow-lg hover:-translate-y-0.5 hover:shadow-xl" href="Eggspert-guidlow.pdf" target="_blank" rel="noopener">Eggspert Guide (PDF)</a>
+              <a class="px-4 py-2 bg-emerald-300 text-gray-950 font-bold rounded-full no-underline shadow-lg hover:-translate-y-0.5 hover:shadow-xl" href="yo.html">Typing Tutor</a>
+            </div>
+          </div>
+        </section>
+
+        <section id="work" class="py-20 px-5 bg-white/5">
+          <h2 class="text-center text-3xl sm:text-4xl font-bold mb-8">Selected Work</h2>
+          <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <a class="p-4 bg-white/5 border border-white/10 rounded-xl no-underline text-white hover:bg-white/10 hover:-translate-y-0.5 hover:shadow-lg" href="flipper.html"><h3 class="font-semibold text-lg mb-1">Dr. Flipper</h3><p class="text-sm text-gray-400">Arcade platformer with tilt/mobile controls.</p></a>
+            <a class="p-4 bg-white/5 border border-white/10 rounded-xl no-underline text-white hover:bg-white/10 hover:-translate-y-0.5 hover:shadow-lg" href="yo.html"><h3 class="font-semibold text-lg mb-1">Typing Tutor</h3><p class="text-sm text-gray-400">WPM & accuracy with live charts.</p></a>
+            <a class="p-4 bg-white/5 border border-white/10 rounded-xl no-underline text-white hover:bg-white/10 hover:-translate-y-0.5 hover:shadow-lg" href="https://dromelette.github.io/" target="_blank" rel="noopener"><h3 class="font-semibold text-lg mb-1">Portfolio (v1)</h3><p class="text-sm text-gray-400">Original playful experiments page.</p></a>
+          </div>
+        </section>
+      `,
+      about: `
+        <section class="max-w-3xl mx-auto py-20 px-5 pt-32">
+          <h1 class="text-4xl sm:text-5xl font-bold text-white mb-4">Hi, I’m Arjun.</h1>
+          <p class="text-lg sm:text-xl text-gray-300 leading-relaxed">
+            I build <span class="text-emerald-300 font-semibold">DevOps</span> pipelines, <span class="text-emerald-300 font-semibold">Flutter</span> apps,
+            and playful <span class="text-emerald-300 font-semibold">web/3D experiments</span>. I like mixing utility with a little mischief (see the egg).
+          </p>
+          <ul class="list-disc list-inside space-y-2 mt-8 text-gray-400">
+            <li>🔧 DevOps & Cloud — CI/CD, Firebase, Firestore, iOS/Android builds, monitoring.</li>
+            <li>📱 Flutter apps — doctor booking, warehouse ops, dashboards.</li>
+            <li>🧪 Web experiments — Three.js visuals, interactive games, teaching tools.</li>
+          </ul>
+          <div class="flex flex-wrap gap-3 mt-6">
+            <a class="px-4 py-2 bg-emerald-300 text-gray-950 font-bold rounded-full no-underline shadow-lg hover:-translate-y-0.5 hover:shadow-xl" href="https://www.linkedin.com/in/arjun-nemani/" target="_blank" rel="noopener">LinkedIn</a>
+            <a class="px-4 py-2 bg-emerald-300 text-gray-950 font-bold rounded-full no-underline shadow-lg hover:-translate-y-0.5 hover:shadow-xl" href="#work">See my work</a>
+            <a class="px-4 py-2 bg-emerald-300 text-gray-950 font-bold rounded-full no-underline shadow-lg hover:-translate-y-0.5 hover:shadow-xl" href="#resume">Résumé</a>
+          </div>
+        </section>
+      `,
+      resume: `
+        <section class="max-w-3xl mx-auto py-20 px-5 pt-32">
+          <h1 class="text-4xl sm:text-5xl font-bold text-white mb-4">Résumé</h1>
+          <section class="space-y-6 mt-8">
+            <h2 class="text-2xl font-bold text-emerald-300">Experience</h2>
+            <ul class="list-disc list-inside space-y-4">
+              <li><strong class="text-white">DevOps / Project Engineer</strong> — BR IT Solutions<br><span class="text-gray-400 text-sm">CI/CD, cloud infra, monitoring, iOS/Android pipelines.</span></li>
+              <li><strong class="text-white">Founder / Product Builder</strong> — Apps & Experiments<br><span class="text-gray-400 text-sm">Flutter + Firebase (doctor booking, warehouse ops), web games/tools.</span></li>
+              <li><strong class="text-white">Grand-Chem Limited</strong> — Packaging ops & digital systems<br><span class="text-gray-400 text-sm">Internal tools, documentation automation, client portals.</span></li>
+            </ul>
+          </section>
+          <section class="space-y-6 mt-8">
+            <h2 class="text-2xl font-bold text-emerald-300">Selected Projects</h2>
+            <ul class="list-disc list-inside space-y-2">
+              <li class="text-white"><span class="text-emerald-300 font-semibold">FindMyDoc</span> — Doctor discovery + booking (Flutter, Firestore, Auth).</li>
+              <li class="text-white"><span class="text-emerald-300 font-semibold">Warehouse Manager</span> — Stock movement & audit logs (Flutter, Firebase).</li>
+              <li class="text-white"><span class="text-emerald-300 font-semibold">Typing Tutor</span> — Live WPM/accuracy + charts (Web).</li>
+              <li class="text-white"><span class="text-emerald-300 font-semibold">Dr. Flipper</span> — Mobile tilt platformer (Web).</li>
+            </ul>
+          </section>
+          <section class="space-y-6 mt-8">
+            <h2 class="text-2xl font-bold text-emerald-300">Skills</h2>
+            <p class="text-gray-400">Flutter, Dart, Firebase (Auth/Firestore/Hosting), Three.js, JS/TS, HTML/CSS, CI/CD, GitHub Actions, Xcode/iOS builds, Android, Docker basics.</p>
+          </section>
+          <section class="space-y-6 mt-8">
+            <h2 class="text-2xl font-bold text-emerald-300">Links</h2>
+            <div class="flex flex-wrap gap-3">
+              <a class="px-4 py-2 bg-emerald-300 text-gray-950 font-bold rounded-full no-underline shadow-lg hover:-translate-y-0.5 hover:shadow-xl" href="https://www.linkedin.com/in/arjun-nemani/" target="_blank" rel="noopener">LinkedIn</a>
+              <a class="px-4 py-2 bg-emerald-300 text-gray-950 font-bold rounded-full no-underline shadow-lg hover:-translate-y-0.5 hover:shadow-xl" href="#work">Portfolio</a>
+              <a class="px-4 py-2 bg-emerald-300 text-gray-950 font-bold rounded-full no-underline shadow-lg hover:-translate-y-0.5 hover:shadow-xl" href="mailto:dromelette2090@gmail.com">Email</a>
+            </div>
+          </section>
+        </section>
+      `
+    };
+
+    function renderPage(name){
+      appRoot.innerHTML = pages[name] || pages.home;
+
+      if (!name || name === 'home'){
+        const eggBtn  = document.getElementById('eggBtn');
+        const crackEl = document.getElementById('crack');
+        const audio   = document.getElementById('rickroll');
+        let busy = false;
+
+        eggBtn?.addEventListener('click', async () => {
+          if (busy) return; busy = true;
+
+          const r = eggBtn.getBoundingClientRect();
+          const cx = r.left + r.width/2;
+          const cy = r.top  + r.height/2;
+
+          eggBtn.classList.add('falling');
+          Object.assign(eggBtn.style, {
+            position:'fixed', left:`${cx}px`, top:`${cy}px`,
+            transform:'translate(-50%, -50%)', zIndex:6
+          });
+
+          const endTop = innerHeight + 200;
+          try{
+            const anim = eggBtn.animate(
+              [
+                { top:`${cy}px`, transform:'translate(-50%, -50%) rotate(0deg)' },
+                { top:`${endTop}px`, transform:'translate(-50%, -50%) rotate(760deg)' }
+              ],
+              { duration:1200, easing:'cubic-bezier(.15,.7,.35,1)', fill:'forwards' }
+            );
+            await anim.finished;
+          }catch(_){ eggBtn.style.top = `${endTop}px`; }
+
+          crackEl.classList.add('show');
+          document.body.classList.add('cat-mode');
+          audio.currentTime = 0; audio.volume = 0.9;
+          audio.play().catch(()=>{
+            const n = document.createElement('button');
+            n.textContent = '▶ Play audio';
+            Object.assign(n.style,{
+              position:'fixed',bottom:'16px',left:'50%',transform:'translateX(-50%)',
+              padding:'10px 14px',borderRadius:'999px',border:'0',
+              background:'#a7f3d0',color:'#0b132a',fontWeight:'800',zIndex:9999
+            });
+            n.addEventListener('click',()=>{ audio.play(); n.remove(); });
+            document.body.appendChild(n);
+          });
+        });
+      }
+    }
+
+    function onHash(){ renderPage(location.hash.slice(1) || 'home'); }
+
+    addEventListener('hashchange', onHash);
+    addEventListener('load', async ()=>{
+      onHash();
+      await initThree();   // start background AFTER page has rendered
+    });
+  </script>
 </body>
 </html>
