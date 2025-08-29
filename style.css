@@ -1,33 +1,29 @@
-/* Reset-ish */
+/* Reset */
 *{box-sizing:border-box} html,body{height:100%;margin:0}
 
 /* Base */
 :root{
-  --bg1:#0b1024; --fg:#e5e7eb; --mint:#a7f3d0; --accent:#86efac; --chip:#0f172a;
+  --bg:#070b18; --bg-deep:#0b1024; --fg:#e5e7eb; --mint:#a7f3d0; --accent:#86efac;
+  --card:#0f172a; --muted:#9ca3af;
 }
 body{
   color:var(--fg);
   font-family: system-ui, Inter, -apple-system, Segoe UI, Roboto, sans-serif;
-  background:#070b18;
+  background:var(--bg);
   overflow-x:hidden;
 }
 
 /* 3D canvas host */
-#three-root{
-  position:fixed; inset:0; z-index:-1;
-}
+#three-root{ position:fixed; inset:0; z-index:-1; }
 
-/* Cat mode — TILED gif (not stretched) */
+/* Cat mode — tiled gif */
 body.cat-mode{
   background-image:url('cat.gif');
   background-repeat:repeat;
-  background-size:200px auto; /* tile size; tweak as you like */
+  background-size:200px auto;
   animation: scrollCats 30s linear infinite;
 }
-@keyframes scrollCats{
-  0%{ background-position: 0 0; }
-  100%{ background-position: 1000px 1000px; }
-}
+@keyframes scrollCats{ 0%{background-position:0 0} 100%{background-position:1000px 1000px} }
 
 /* Header */
 .brand{
@@ -44,44 +40,58 @@ body.cat-mode{
   color:var(--fg); text-decoration:none; margin-left:14px;
   padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.05);
 }
+.brand .links a[aria-current="page"]{ background:rgba(255,255,255,.15) }
 .brand .links a:hover{ background:rgba(255,255,255,.12) }
 
-/* Hero overlay */
-.hero{
-  min-height:100vh; display:grid; place-items:center; text-align:center; padding:70px 16px 32px;
-}
+/* Hero */
+.hero{ min-height:100vh; display:grid; place-items:center; text-align:center; padding:70px 16px 32px; }
 .stack{ display:grid; gap:22px; place-items:center; }
 
 .title{
-  font-size:clamp(32px, 7vw, 72px);
-  margin:0;
+  font-size:clamp(32px, 7vw, 72px); margin:0;
   text-shadow: 0 10px 30px rgba(0,0,0,.5);
 }
 .title em{ color:var(--accent); font-style:normal; }
 
-/* Egg button */
-.egg-wrap{ display:grid; place-items:center; }
+/* Egg */
+.egg-wrap{ position:relative; display:grid; place-items:center; height:240px; }
 .egg{
   appearance:none; border:0; background:transparent; cursor:pointer;
   display:grid; place-items:center; position:relative;
+  will-change: transform;
   transition: transform .12s ease;
 }
 .egg:hover{ transform: translateY(-2px) scale(1.02) }
 .egg:active{ transform: translateY(1px) scale(0.99) }
-.egg svg{ filter: drop-shadow(0 25px 40px rgba(0,0,0,.35)); }
-.egg-hint{
-  position:absolute; bottom:-20px; left:50%; transform:translateX(-50%);
-  font-size:12px; color:#9ca3af;
-  opacity:.9;
-}
+.egg-svg{ filter: drop-shadow(0 25px 40px rgba(0,0,0,.35)); }
+.egg-hint{ position:absolute; bottom:-20px; left:50%; transform:translateX(-50%); font-size:12px; color:var(--muted) }
 
-/* Falling animation */
+/* Falling + crack */
 .egg.fall{
+  pointer-events:none;
   animation: eggFall 1.15s cubic-bezier(.15,.7,.35,1) forwards,
-             eggSpin 1.15s cubic-bezier(.15,.7,.35,1) forwards;
+           eggSpin 1.15s cubic-bezier(.15,.7,.35,1) forwards;
 }
-@keyframes eggFall{ to{ transform: translateY(120vh) rotate(0deg); opacity:.9; } }
-@keyframes eggSpin{ to{ transform: translateY(120vh) rotate(720deg) } }
+@keyframes eggFall{ to{ transform: translate3d(0, 120vh, 0) } }
+@keyframes eggSpin{ to{ transform: translate3d(0,120vh,0) rotate(720deg) } }
+
+.crack{
+  position:fixed; left:50%; bottom:10px; transform:translateX(-50%) scale(0.9);
+  opacity:0; pointer-events:none; z-index:5;
+}
+.crack.show{
+  animation: crackPop .45s ease-out forwards, screenShake .35s ease-in-out 1;
+}
+@keyframes crackPop{
+  0%{ opacity:0; transform:translateX(-50%) scale(0.7) }
+  100%{ opacity:1; transform:translateX(-50%) scale(1) }
+}
+@keyframes screenShake{
+  0%,100%{ transform:translateX(calc(-50%)) }
+  25%{ transform:translateX(calc(-50% + 8px)) }
+  50%{ transform:translateX(calc(-50% - 6px)) }
+  75%{ transform:translateX(calc(-50% + 4px)) }
+}
 
 /* Chips */
 .cta-row{ display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
@@ -89,13 +99,23 @@ body.cat-mode{
   text-decoration:none; color:#0b132a; background:var(--mint);
   padding:10px 14px; border-radius:999px; font-weight:700;
   box-shadow: 0 8px 18px rgba(0,0,0,.15);
-  transition: transform .12s ease, box-shadow .12s ease, background .2s ease;
+  transition: transform .12s ease, box-shadow .12s ease;
 }
-.chip:hover{ transform: translateY(-2px); box-shadow:0 12px 28px rgba(0,0,0,.20); }
+.chip:hover{ transform: translateY(-2px); box-shadow:0 12px 28px rgba(0,0,0,.20) }
 
-/* Hide everything in cat mode */
-body.cat-mode .brand,
-body.cat-mode .hero{ display:none; }
+/* Work section */
+.work{ padding:80px 20px; background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.00)); }
+.work h2{ text-align:center; margin:0 0 26px; font-size:clamp(24px, 4vw, 36px) }
+.work-grid{
+  margin:0 auto; width:min(1100px, 92vw);
+  display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:16px;
+}
+.work-card{
+  text-decoration:none; color:var(--fg); background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:16px;
+  transition: transform .12s ease, background .2s ease, border-color .2s ease;
+}
+.work-card:hover{ transform: translateY(-3px); background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.15) }
+.work-card h3{ margin:0 0 6px; }
 
-/* Utility */
-.hidden{ display:none !important; }
+/* Contact footer (simple, centered*
