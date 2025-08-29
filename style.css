@@ -118,4 +118,22 @@ body.cat-mode{
 .work-card:hover{ transform: translateY(-3px); background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.15) }
 .work-card h3{ margin:0 0 6px; }
 
-/* Contact footer (simple, centered*
+/* Contact footer (simple, centered email) */
+.contact{
+  padding:40px 20px; text-align:center; border-top:1px solid rgba(255,255,255,.08);
+}
+.contact a{ color:var(--mint); text-decoration:none; border-bottom:1px dotted rgba(167,243,208,.4) }
+.contact a:hover{ border-bottom-color: rgba(167,243,208,.9) }
+
+/* Subpages */
+.page .brand{ position:sticky; top:0; background:linear-gradient(180deg, rgba(7,11,24,.85), rgba(7,11,24,0)); backdrop-filter: blur(8px); }
+.about, .resume{
+  margin:100px auto 40px; width:min(900px, 92vw); line-height:1.7;
+}
+.about-title{ font-size:clamp(32px,6vw,56px); margin:0 0 10px }
+.about-lead{ font-size:clamp(18px,2.5vw,22px); color:#dbeafe }
+.about-list{ padding-left:18px }
+.about-links{ margin-top:18px }
+
+.resume-title{ font-size:clamp(28px,5vw,44px); margin:0 0 10px }
+.resume-list{ padding-left:18px }
