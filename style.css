@@ -5,7 +5,7 @@
 /* Base */
 :root{
   --bg:#070b18; --bg-deep:#0b1024; --fg:#e5e7eb; --mint:#a7f3d0; --accent:#86efac;
-  --card:#0f172a; --muted:#9ca3af;
+  --muted:#9ca3af;
 }
 body{
   color:var(--fg);
@@ -17,7 +17,7 @@ body{
 /* 3D canvas host */
 #three-root{ position:fixed; inset:0; z-index:-1; }
 
-/* Cat mode — tiled gif */
+/* Cat mode — tiled gif (not stretched) */
 body.cat-mode{
   background-image:url('cat.gif');
   background-repeat:repeat;
@@ -59,24 +59,15 @@ body.cat-mode{
 .egg{
   appearance:none; border:0; background:transparent; cursor:pointer;
   display:grid; place-items:center; position:relative;
-  will-change: transform;
+  will-change: transform, top;
   transition: transform .12s ease;
 }
-.egg:not(.fall):hover{ transform: translateY(-2px) scale(1.02) }
-.egg:not(.fall):active{ transform: translateY(1px) scale(0.99) }
+.egg:not(.falling):hover{ transform: translateY(-2px) scale(1.02) }
+.egg:not(.falling):active{ transform: translateY(1px) scale(0.99) }
 .egg-svg{ filter: drop-shadow(0 25px 40px rgba(0,0,0,.35)); }
 .egg-hint{ position:absolute; bottom:-20px; left:50%; transform:translateX(-50%); font-size:12px; color:var(--muted) }
 
-/* Single combined animation */
-.egg.fall{
-  pointer-events:none;
-  animation: eggDrop 1.2s cubic-bezier(.15,.7,.35,1) forwards;
-}
-@keyframes eggDrop{
-  to { transform: translate(-50%, calc(100vh + 200px)) rotate(760deg); }
-}
-
-/* Crack */
+/* Crack (appears after fall) */
 .crack{
   position:fixed; left:50%; bottom:10px; transform:translateX(-50%) scale(0.9);
   opacity:0; pointer-events:none; z-index:5;
@@ -105,7 +96,7 @@ body.cat-mode{
 }
 .chip:hover{ transform: translateY(-2px); box-shadow:0 12px 28px rgba(0,0,0,.20) }
 
-/* Work section */
+/* Work */
 .work{ padding:80px 20px; background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.00)); }
 .work h2{ text-align:center; margin:0 0 26px; font-size:clamp(24px, 4vw, 36px) }
 .work-grid{
@@ -120,14 +111,14 @@ body.cat-mode{
 .work-card:hover{ transform: translateY(-3px); background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.15) }
 .work-card h3{ margin:0 0 6px; }
 
-/* Contact footer */
+/* Contact */
 .contact{
   padding:40px 20px; text-align:center; border-top:1px solid rgba(255,255,255,.08);
 }
 .contact a{ color:var(--mint); text-decoration:none; border-bottom:1px dotted rgba(167,243,208,.4) }
 .contact a:hover{ border-bottom-color: rgba(167,243,208,.9) }
 
-/* Subpages */
+/* Subpages (About/Resume use same CSS, keep these files as-is if you already added them) */
 .page .brand{ position:sticky; top:0; background:linear-gradient(180deg, rgba(7,11,24,.85), rgba(7,11,24,0)); backdrop-filter: blur(8px); }
 .about, .resume{ margin:100px auto 40px; width:min(900px, 92vw); line-height:1.7; }
 .about-title{ font-size:clamp(32px,6vw,56px); margin:0 0 10px }
