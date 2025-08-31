@@ -5,69 +5,403 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Arjun Nemani — Résumé</title>
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.161/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.161/examples/js/controls/OrbitControls.js"></script>
+  <!-- Tailwind + Three (defer so they don't block) -->
+  <script src="https://cdn.tailwindcss.com" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.161/build/three.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.161/examples/js/controls/OrbitControls.js" defer></script>
 
   <style>
-    :root{ --bg:#070b18; --fg:#e5e7eb; }
-    html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow-x:hidden}
-    #three-root{position:fixed;inset:0;z-index:-2}
-    header{backdrop-filter:saturate(140%) blur(6px)}
-    a.nav{color:#fff;text-decoration:none;padding:.5rem .75rem;border-radius:999px;background:rgba(255,255,255,.06)}
-    a.nav:hover{background:rgba(255,255,255,.12)}
-    .lift:hover{transform:translateY(-6px);transition:.25s ease; }
-    .section{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:1rem}
+  /* Reset & base */
+  *{box-sizing:border-box} html,body{height:100%;margin:0}
+  html{ scroll-behavior: smooth; }
+  :root{
+    --bg:#070b18; --bg-deep:#0b1024; --fg:#e5e7eb; --mint:#a7f3d0; --accent:#86efac;
+    --muted:#9ca3af; --elev: 0 10px 20px rgba(0,0,0,.08);
+  }
+  body{ color:var(--fg); font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); overflow-x:hidden }
+  #three-root{ position:fixed; inset:0; z-index:-2 }
+
+  /* Header pills */
+  header{ backdrop-filter:saturate(140%) blur(6px) }
+  a.nav{ color:#fff; text-decoration:none; padding:.5rem .75rem; border-radius:999px; background:rgba(255,255,255,.06) }
+  a.nav:hover{ background:rgba(255,255,255,.12) }
+
+  /* Cards */
+  .section{ background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); border-radius:1rem }
+  .lift{ transition:transform .25s ease, box-shadow .25s ease }
+  .lift:hover{ transform:translateY(-6px) }
+
+  /* Reveal on scroll */
+  .reveal{ opacity:0; transform:translateY(12px); transition:opacity .5s ease, transform .5s ease }
+  .reveal.in{ opacity:1; transform:none }
+
+  /* Experience accordion */
+  .exp-item{ border-radius:14px; border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.04); overflow:hidden }
+  .exp-head{ display:flex; gap:.75rem; align-items:start; cursor:pointer; padding:1rem 1.1rem }
+  .exp-head .chev{ margin-left:auto; transition: transform .2s ease }
+  .exp-body{ max-height:0; overflow:hidden; transition:max-height .35s ease }
+  .exp-item.open .exp-body{ max-height:900px }
+  .exp-item.open .chev{ transform: rotate(90deg) }
+
+  /* Quick jump bar */
+  .qjump .qbtn{ padding:.45rem .75rem; border-radius:999px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12) }
+  .qjump .qbtn:hover{ background:rgba(255,255,255,.12) }
+
+  /* Compact info cards */
+  .mini{ padding:14px 16px; border-radius:12px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08) }
+
+  /* Language bars (compact) */
+  .lang-grid{ display:grid; grid-template-columns: 1fr auto; gap:.5rem .75rem; align-items:center }
+  .bar{ width:160px; height:8px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden }
+  .bar>span{ display:block; height:100%; background:var(--accent) }
+
+  /* Skill chips (compact) */
+  .skill{ display:inline-flex; align-items:center; gap:.5rem; padding:.3rem .55rem; border-radius:10px; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.05); font-weight:600; font-size:.95rem }
+  .s-icon{ width:18px; height:18px; border-radius:4px; background:rgba(255,255,255,.12); display:inline-grid; place-items:center; font-size:.7rem }
+
+  /* Timeline */
+  .timeline{ position:relative; padding-left:1.5rem }
+  .timeline:before{ content:""; position:absolute; left:.5rem; top:.25rem; bottom:.25rem; width:2px; background:rgba(255,255,255,.12) }
+  .t-item{ position:relative; margin:0 0 1rem 0; padding-left:1rem }
+  .t-item:before{ content:""; position:absolute; left:-.07rem; top:.35rem; width:.65rem; height:.65rem; border-radius:999px; background:var(--accent); box-shadow:0 0 0 4px rgba(134,239,172,.15) }
+
+  /* Countries chips + progress */
+  .chip{ display:inline-flex; align-items:center; gap:.4rem; padding:.35rem .6rem; border-radius:999px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1); font-weight:600 }
+  .badge{ font-size:.75rem; padding:.1rem .45rem; border-radius:999px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.08) }
+  .prog{ height:10px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden }
+  .prog>span{ display:block; height:100%; background:var(--accent); width:0% }
+
+  /* Photo scroller */
+  .hstrip{ position:relative }
+  .strip{ display:grid; grid-auto-flow:column; grid-auto-columns: 68vw; gap:.75rem; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling: touch; padding-bottom:.5rem }
+  .strip > figure{ scroll-snap-align:center; margin:0; position:relative; }
+  .strip img, .strip video{ width:100%; height:48vh; object-fit:cover; border-radius:14px; }
+  .arrow{ position:absolute; top:50%; transform:translateY(-50%); background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.15); color:#fff; width:38px; height:38px; border-radius:999px; display:grid; place-items:center; cursor:pointer }
+  .arrow:hover{ background:rgba(0,0,0,.6) }
+  .arrow.left{ left:6px } .arrow.right{ right:6px }
+
+  /* Lightbox + gallery */
+  .gallery{ display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem }
+  .gallery img{ width:100%; height:140px; object-fit:cover; border-radius:10px; cursor:pointer }
+  .lb{ position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; z-index:50 }
+  .lb.show{ display:flex }
+  .lb img{ max-width:90vw; max-height:88vh; border-radius:12px }
+
+  /* Print */
+  .no-print{ display:initial }
+  @media print{
+    .no-print, .qjump, .arrow, video { display:none !important }
+    #three-root { display:none !important }
+    header { position: static !important }
+    main { padding: 0 !important }
+    .section { break-inside: avoid; page-break-inside: avoid }
+    .exp-body{ max-height: none !important }  /* ensure accordions print expanded */
+    body{ -webkit-print-color-adjust: exact; print-color-adjust: exact }
+  }
+  @page{ size:A4; margin:14mm 12mm; }
   </style>
 </head>
 <body>
   <div id="three-root" aria-hidden="true"></div>
 
+  <!-- Header -->
   <header class="fixed top-3 left-1/2 -translate-x-1/2 w-[min(1100px,92vw)] z-10 flex items-center justify-between">
     <a href="https://www.linkedin.com/in/arjun-nemani/" class="nav font-extrabold">Arjun&nbsp;Nemani</a>
-    <nav class="flex gap-2">
+    <nav class="flex gap-2 items-center">
       <a class="nav" href="index.html">Home</a>
-      <a class="nav" href="resume.html">Résumé</a>
+      <a class="nav" href="resume.html" aria-current="page">Résumé</a>
+
+      <!-- 👀 Visitor counter pill -->
+      <a class="nav no-print" href="#" onclick="return false" title="Total visits">
+        👀 <span id="visitNum">—</span>
+      </a>
     </nav>
   </header>
 
-  <main class="pt-24 px-4 pb-16">
-    <!-- Floating intro -->
-    <section class="max-w-3xl mx-auto section p-6 md:p-8 lift">
-      <h1 class="text-4xl sm:text-5xl font-bold text-white mb-2">Hi, I’m Arjun.</h1>
-      <p class="text-lg sm:text-xl text-gray-300 leading-relaxed">
-        I build <span class="text-emerald-300 font-semibold">DevOps</span> pipelines,
-        <span class="text-emerald-300 font-semibold">Flutter</span> apps, and playful
-        <span class="text-emerald-300 font-semibold">web/3D experiments</span>.
-      </p>
+  <main class="pt-24 px-4 pb-16 space-y-6">
+
+    <!-- Section jump bar -->
+    <section class="max-w-3xl mx-auto section p-3 md:p-4 lift reveal qjump" id="start">
+      <div class="flex flex-wrap gap-2 justify-between items-center">
+        <div class="flex gap-2">
+          <a class="qbtn" href="#it">IT</a>
+          <a class="qbtn" href="#media">Media</a>
+          <a class="qbtn" href="#mkt-sales">Marketing & Sales</a>
+          <a class="qbtn" href="#countries">Countries</a>
+        </div>
+        <button class="no-print nav font-semibold" id="printBtn" type="button">Download PDF</button>
+      </div>
     </section>
 
-    <section class="max-w-3xl mx-auto section p-6 md:p-8 mt-6">
+    <!-- Intro (with hero image) -->
+    <section class="max-w-3xl mx-auto section p-6 md:p-8 lift reveal">
+      <div class="grid grid-cols-[1fr,120px] gap-4 items-start">
+        <div>
+          <h1 class="text-3xl sm:text-4xl font-bold text-white">Hi, I’m Arjun.</h1>
+          <p class="mt-2 text-gray-300">
+            I build <span class="text-emerald-300 font-semibold">DevOps</span> pipelines,
+            <span class="text-emerald-300 font-semibold">Flutter</span> apps, and playful web/3D experiments.
+          </p>
+          <p class="mt-3 text-gray-300">
+            Hands-on engineer & founder connecting software with real-world ops across manufacturing, travel, and edtech—ship fast, measure impact, iterate smarter.
+          </p>
+        </div>
+        <figure class="w-[120px] h-[120px] rounded-xl overflow-hidden ring-1 ring-white/15 shadow-[var(--elev)]">
+          <img src="images/dp.png" alt="Arjun — profile" class="w-full h-full object-cover" />
+        </figure>
+      </div>
+
+      <!-- Compact Languages & Skills -->
+      <div class="grid sm:grid-cols-2 gap-3 mt-5">
+        <div class="mini">
+          <h3 class="font-semibold text-white mb-2">Languages</h3>
+          <div class="lang-grid text-sm">
+            <div>English <span class="text-gray-400">— Full professional</span></div><div class="bar"><span style="width:92%"></span></div>
+            <div>French (B1) <span class="text-gray-400">— Professional working</span></div><div class="bar"><span style="width:60%"></span></div>
+            <div>Portuguese (A1) <span class="text-gray-400">— Elementary</span></div><div class="bar"><span style="width:30%"></span></div>
+            <div>Hindi <span class="text-gray-400">— Professional working</span></div><div class="bar"><span style="width:85%"></span></div>
+            <div>Telugu <span class="text-gray-400">— Native/Bilingual</span></div><div class="bar"><span style="width:100%"></span></div>
+            <div>Tamil <span class="text-gray-400">— Elementary</span></div><div class="bar"><span style="width:40%"></span></div>
+          </div>
+        </div>
+        <div class="mini">
+          <h3 class="font-semibold text-white mb-2">Skills</h3>
+          <div class="flex flex-wrap gap-2 text-sm">
+            <span class="skill"><span class="s-icon">SS</span>Soft Skills</span>
+            <span class="skill"><span class="s-icon">SS</span>Negotiation Skills</span>
+            <span class="skill"><span class="s-icon">SS</span>Soft Skills</span>
+            <span class="skill"><span class="s-icon">SS</span>Soft Skills</span>
+            <span class="skill"><span class="s-icon">&lt;/&gt;</span>HTML</span>
+            <span class="skill"><span class="s-icon">#</span>CSS</span>
+            <span class="skill"><span class="s-icon">JS</span>JavaScript</span>
+            <span class="skill"><span class="s-icon">F</span>Flutter</span>
+            <span class="skill"><span class="s-icon">Py</span>Python</span>
+            <span class="skill"><span class="s-icon">Dj</span>Django</span>
+            <span class="skill"><span class="s-icon">Fi</span>Firebase</span>
+            <span class="skill"><span class="s-icon">☁</span>AWS</span>
+            <span class="skill"><span class="s-icon">CI</span>GitHub CI/CD</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Countries & flags (with counter + progress) -->
+    <section class="max-w-3xl mx-auto section p-6 md:p-8 reveal" id="countries">
+      <div class="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h2 class="text-2xl font-bold text-emerald-300">Countries Traveled</h2>
+          <p class="text-gray-400 text-sm mt-1">
+            Status: <span class="badge">Birth</span> <span class="badge">Visited</span> <span class="badge">Worked</span> <span class="badge">Current</span>
+          </p>
+        </div>
+        <div class="text-right">
+          <div class="text-sm text-gray-300"><span id="visitedCount">0</span> / <span id="totalCount">195</span> visited</div>
+          <div class="text-xs text-gray-400"><span id="leftCount">0</span> left to visit</div>
+          <div class="prog mt-1 w-56"><span id="visitProg"></span></div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-2 mt-3" id="countryChips">
+        <span class="chip" data-country="India">🇮🇳 India <span class="badge">Birth</span></span>
+        <span class="chip" data-country="Uganda">🇺🇬 Uganda <span class="badge">Visited</span></span>
+        <span class="chip" data-country="Kenya">🇰🇪 Kenya <span class="badge">Visited</span></span>
+        <span class="chip" data-country="Rwanda">🇷🇼 Rwanda <span class="badge">Visited</span></span>
+        <span class="chip" data-country="Angola">🇦🇴 Angola <span class="badge">Worked</span></span>
+        <span class="chip" data-country="Ghana">🇬🇭 Ghana <span class="badge">Current</span></span>
+        <span class="chip" data-country="United Arab Emirates">🇦🇪 UAE <span class="badge">Visited</span></span>
+        <span class="chip" data-country="Qatar">🇶🇦 Qatar <span class="badge">Visited</span> <span class="text-xs text-gray-300"></span></span>
+        <span class="chip" data-country="Hungary">🇭🇺 Hungary <span class="badge">Visited</span></span>
+        <span class="chip" data-country="France">🇫🇷 France <span class="badge">Worked</span></span>
+        <span class="chip" data-country="Spain">🇪🇸 Spain <span class="badge">Visited</span></span>
+        <span class="chip" data-country="Portugal">🇵🇹 Portugal <span class="badge">Worked</span></span>
+        <span class="chip" data-country="Netherlands">🇳🇱 Netherlands <span class="badge">Visited</span></span>
+        <span class="chip" data-country="Belgium">🇧🇪 Belgium <span class="badge">Visited</span></span>
+        <span class="chip" data-country="Burkina Faso">🇧🇫 Burkina Faso <span class="badge">Visited</span></span>
+        <span class="chip" data-country="Mali">🇲🇱 Mali <span class="badge">Visited</span></span>
+      </div>
+    </section>
+
+    <!-- Experience -->
+    <section class="max-w-3xl mx-auto section p-6 md:p-8 reveal" id="mkt-sales">
       <h2 class="text-2xl font-bold text-emerald-300">Experience</h2>
-      <ul class="list-disc list-inside space-y-3 mt-3">
-        <li><strong>DevOps / Project Engineer</strong> — BR IT Solutions<br/><span class="text-gray-400 text-sm">CI/CD, cloud infra, monitoring, iOS/Android pipelines.</span></li>
-        <li><strong>Founder / Product Builder</strong> — Apps & Experiments<br/><span class="text-gray-400 text-sm">Flutter + Firebase (doctor booking, warehouse ops), web games/tools.</span></li>
-        <li><strong>Grand-Chem Limited</strong> — Packaging ops & digital systems<br/><span class="text-gray-400 text-sm">Internal tools, documentation automation, client portals.</span></li>
-      </ul>
+      <div class="mt-4 space-y-3">
+
+        <article class="exp-item" data-category="marketing">
+          <header class="exp-head">
+            <div>
+              <h3 class="text-white font-semibold">Marketing Manager — Grand-Chem LTD</h3>
+              <p class="text-gray-400 text-sm">Mar 2025 – Present • Accra, Ghana • Ghana, Burkina Faso, Côte d’Ivoire, Togo, Mali</p>
+            </div>
+            <span class="chev">▶</span>
+          </header>
+          <div class="exp-body">
+            <div class="p-4 pt-0">
+              <ul class="list-disc list-inside space-y-2 text-gray-300">
+                <li>Lead B2B marketing & customer success for Ghana and francophone West Africa—prospecting, proposals, onboarding, after-sales, and renewals.</li>
+                <li>Built a standardized client onboarding system (KYC, credit terms, specs, COA/TDS pack, SLA sign-off) that streamlines hand-offs to operations & finance.</li>
+                <li>Plan & execute digital + offline marketing: Google/Meta ads, market visits, distributor partnerships, trade events, and ABM for francophone markets.</li>
+                <li>Coordinate duty-paid cross-border shipments with full customs documentation and OTIF follow-through; maintain strong client partnerships.</li>
+                <li>Drive BRCGS (BRC) Food Packaging certification readiness: gap analysis, HACCP/traceability/GMP SOPs, staff training, and audit evidence management.</li>
+                <li>Initiated a Factory Plant Operations mobile app (Flutter + Firebase) for job tickets, production/QC logs, and status tracking.</li>
+                <li>Voice-of-Customer: in-person visits (FR/EN), requirement capture, and QBRs to align volumes, lead times, and quality KPIs.</li>
+              </ul>
+              <p class="mt-3 text-gray-400"><strong>Skills:</strong> Sales · B2B · Sales & Marketing · Salesmanship · After-Sales · Presales · Customer Relations</p>
+              <p class="text-gray-400"><strong>Tools:</strong> Google/Meta Ads · Sheets/Notion/CRM · Flutter & Firebase (internal) · Docs automation</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="exp-item" data-category="it" id="it">
+          <header class="exp-head">
+            <div>
+              <h3 class="text-white font-semibold">Tech Lead — BR IT Solutions</h3>
+              <p class="text-gray-400 text-sm">Oct 2022 – Mar 2025 • Braga, Portugal</p>
+            </div>
+            <span class="chev">▶</span>
+          </header>
+          <div class="exp-body">
+            <div class="p-4 pt-0">
+              <ul class="list-disc list-inside space-y-2 text-gray-300">
+                <li>Delivered websites & Flutter apps for Portuguese SMEs (Atlântico Business School, Pizza Express), from scope to launch.</li>
+                <li>Stack: <strong>HTML, CSS, JS, Flutter, Python, Django, Firebase, AWS, GitHub CI/CD</strong>.</li>
+                <li>Built GitHub Actions + Fastlane CI/CD; improved release cadence, reduced manual steps.</li>
+                <li>Ran digital marketing for education clients: Google Ads & UGC with influencers via Meta Ads.</li>
+                <li>Talent strategy:
+                  <ul class="list-disc list-inside ml-5">
+                    <li><em>E-Learning Platform</em>: recruited FE/BE engineers with edtech experience.</li>
+                    <li><em>Job Search Platform</em>: sourced devs, UI/UX, PMs; coordinated with leads.</li>
+                  </ul>
+                </li>
+              </ul>
+              <p class="mt-3 text-gray-400"><strong>Skills:</strong> Full-stack delivery · CI/CD · Cloud · Product & Marketing · IT Recruitment</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="exp-item" data-category="it">
+          <header class="exp-head">
+            <div>
+              <h3 class="text-white font-semibold">Technical Recruiter (Contract) — Deloitte</h3>
+              <p class="text-gray-400 text-sm">Oct 2024 – Jan 2025 • Remote</p>
+            </div>
+            <span class="chev">▶</span>
+          </header>
+          <div class="exp-body">
+            <div class="p-4 pt-0">
+              <ul class="list-disc list-inside space-y-2 text-gray-300">
+                <li>Owned lifecycle hiring for <strong>TPRM</strong>, <strong>QRM</strong>, and <strong>VAPT</strong> roles.</li>
+                <li>Sourcing & screening via portals, social, and networks; skills/experience fit evaluation.</li>
+                <li>Coordinated interview schedules, negotiated compensation, managed offers, and supported onboarding.</li>
+              </ul>
+              <p class="mt-3 text-gray-400"><strong>Skills:</strong> IT Recruitment · Pipeline mgmt · Stakeholder coordination · Offer & onboarding</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="exp-item" data-category="it">
+          <header class="exp-head">
+            <div>
+              <h3 class="text-white font-semibold">DevOps Engineer (Contract) — Scaleway</h3>
+              <p class="text-gray-400 text-sm">Oct 2021 – Mar 2022 • Paris, France</p>
+            </div>
+            <span class="chev">▶</span>
+          </header>
+          <div class="exp-body">
+            <div class="p-4 pt-0">
+              <ul class="list-disc list-inside space-y-2 text-gray-300">
+                <li>Supported DevOps workflows using <strong>Python</strong>, <strong>Kubernetes</strong>, and <strong>Docker</strong>.</li>
+                <li>Containerization, environment automation, and deployment hygiene.</li>
+              </ul>
+              <p class="mt-3 text-gray-400"><strong>Skills:</strong> Python · DevOps · Kubernetes · Docker</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="exp-item" data-category="it">
+          <header class="exp-head">
+            <div>
+              <h3 class="text-white font-semibold">DevOps Intern — AvekIA Technology</h3>
+              <p class="text-gray-400 text-sm">Feb 2021 – Jul 2021 • Ivry-sur-Seine, Île-de-France, France</p>
+            </div>
+            <span class="chev">▶</span>
+          </header>
+          <div class="exp-body">
+            <div class="p-4 pt-0">
+              <ul class="list-disc list-inside space-y-2 text-gray-300">
+                <li>Maintained CI scripts and containerized services with Docker.</li>
+                <li>Python automation and environment setup for internal teams.</li>
+              </ul>
+              <p class="mt-3 text-gray-400"><strong>Skills:</strong> Python · DevOps · Docker</p>
+            </div>
+          </div>
+        </article>
+
+      </div>
     </section>
 
-    <section class="max-w-3xl mx-auto section p-6 md:p-8 mt-6">
-      <h2 class="text-2xl font-bold text-emerald-300">Selected Projects</h2>
-      <ul class="list-disc list-inside space-y-2 mt-3">
-        <li><span class="text-emerald-300 font-semibold">FindMyDoc</span> — Doctor discovery + booking (Flutter, Firestore, Auth).</li>
-        <li><span class="text-emerald-300 font-semibold">Warehouse Manager</span> — Stock movement & audit logs (Flutter, Firebase).</li>
-        <li><span class="text-emerald-300 font-semibold">Typing Tutor</span> — Live WPM/accuracy + charts (Web).</li>
-        <li><span class="text-emerald-300 font-semibold">Dr. Flipper</span> — Mobile tilt platformer (Web).</li>
-      </ul>
+    <!-- Work Timeline -->
+    <section class="max-w-3xl mx-auto section p-6 md:p-8 reveal">
+      <h2 class="text-2xl font-bold text-emerald-300">Work Timeline</h2>
+      <div class="timeline mt-4 space-y-3">
+        <div class="t-item">
+          <p class="text-white font-semibold">Grand-Chem LTD — Marketing Manager</p>
+          <p class="text-gray-400 text-sm">Mar 2025 – Present • Accra, Ghana • Ghana, Burkina Faso, Côte d’Ivoire, Togo, Mali</p>
+        </div>
+        <div class="t-item">
+          <p class="text-white font-semibold">BR IT Solutions — Tech Lead</p>
+          <p class="text-gray-400 text-sm">Oct 2022 – Mar 2025 • Braga, Portugal</p>
+        </div>
+        <div class="t-item">
+          <p class="text-white font-semibold">Deloitte — Technical Recruiter (Contract)</p>
+          <p class="text-gray-400 text-sm">Oct 2024 – Jan 2025 • Remote</p>
+        </div>
+        <div class="t-item">
+          <p class="text-white font-semibold">Scaleway — DevOps Engineer (Contract)</p>
+          <p class="text-gray-400 text-sm">Oct 2021 – Mar 2022 • Paris, France</p>
+        </div>
+        <div class="t-item">
+          <p class="text-white font-semibold">AvekIA Technology — DevOps Intern</p>
+          <p class="text-gray-400 text-sm">Feb 2021 – Jul 2021 • Ivry-sur-Seine, Île-de-France, France</p>
+        </div>
+      </div>
     </section>
 
-    <section class="max-w-3xl mx-auto section p-6 md:p-8 mt-6">
-      <h2 class="text-2xl font-bold text-emerald-300">Skills</h2>
-      <p class="text-gray-300">Flutter, Dart, Firebase (Auth/Firestore/Hosting), Three.js, JS/TS, HTML/CSS, CI/CD, GitHub Actions, Xcode/iOS builds, Android, Docker basics.</p>
+    <!-- Media (photo/video scroller + gallery anchor) -->
+    <section class="max-w-4xl mx-auto section p-6 md:p-8 reveal" id="media">
+      <div class="flex items-baseline justify-between">
+        <h2 class="text-2xl font-bold text-emerald-300">Media — Digital Marketing & Content</h2>
+        <a href="#gallery" class="nav text-sm">Open Gallery</a>
+      </div>
+      <p class="text-gray-400 text-sm mt-1">Swipe/scroll horizontally. Add your photos/videos by replacing sources.</p>
+      <div class="hstrip mt-3">
+        <button class="arrow left" aria-label="Scroll left" type="button">‹</button>
+        <button class="arrow right" aria-label="Scroll right" type="button">›</button>
+        <div class="strip" id="strip">
+          <figure><img src="images/ladakh-ride.jpg" alt="Ladakh ride"></figure>
+          <figure><img src="images/grandchem.jpg" alt="Grand-Chem"></figure>
+          <figure><img src="images/findmydoc.png" alt="FindMyDoc app"></figure>
+          <figure><video src="images/reel.mp4" muted loop playsinline></video></figure>
+          <figure><img src="images/factory-2.jpg" alt="Factory view"></figure>
+        </div>
+      </div>
     </section>
 
-    <section class="max-w-3xl mx-auto section p-6 md:p-8 mt-6">
+    <!-- Gallery (lightbox grid) -->
+    <section class="max-w-3xl mx-auto section p-6 md:p-8 reveal" id="gallery">
+      <h2 class="text-2xl font-bold text-emerald-300">Gallery</h2>
+      <p class="text-gray-400 text-sm mb-2">Click to enlarge. Replace placeholders with your images.</p>
+      <div class="gallery">
+        <img data-lb src="images/grandchem.jpg" alt="Grand-Chem" />
+        <img data-lb src="images/snowmist.jpg" alt="Snowmist" />
+        <img data-lb src="images/findmydoc.png" alt="FindMyDoc app" />
+        <img data-lb src="images/factory-2.jpg" alt="Factory" />
+        <img data-lb src="images/ladakh-ride.jpg" alt="Ladakh ride" />
+        <img data-lb src="images/dashboard.png" alt="Ops dashboard" />
+      </div>
+    </section>
+
+    <!-- Links -->
+    <section class="max-w-3xl mx-auto section p-6 md:p-8 reveal">
       <h2 class="text-2xl font-bold text-emerald-300">Links</h2>
       <div class="flex flex-wrap gap-3 mt-3">
         <a class="nav" href="https://www.linkedin.com/in/arjun-nemani/" target="_blank" rel="noopener">LinkedIn</a>
@@ -75,56 +409,196 @@
         <a class="nav" href="mailto:dromelette2090@gmail.com">Email</a>
       </div>
     </section>
+
   </main>
 
+  <!-- Lightbox -->
+  <div class="lb" id="lightbox"><img alt=""></div>
+
   <script>
-    // Reuse same deep-space scene
-    (function space(){
-      const root = document.getElementById('three-root');
-      const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
-      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-      renderer.setSize(innerWidth, innerHeight);
-      root.appendChild(renderer.domElement);
+  // Run after DOM is parsed
+  document.addEventListener('DOMContentLoaded', () => {
+    // Reveal on scroll
+    const r = document.querySelectorAll('.reveal');
+    const io = new IntersectionObserver(es => es.forEach(e=>{
+      if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    }), {threshold:.15});
+    r.forEach(el => io.observe(el));
 
-      const scene = new THREE.Scene();
-      scene.fog = new THREE.FogExp2(new THREE.Color('#0b1024'), 0.035);
-      const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, .1, 200);
-      camera.position.set(0, 1.2, 6);
+    // Accordions
+    document.querySelectorAll('.exp-item .exp-head').forEach(h=>{
+      h.addEventListener('click', ()=> h.parentElement.classList.toggle('open'));
+    });
 
-      const controls = new THREE.OrbitControls(camera, renderer.domElement);
-      controls.enableDamping = true; controls.enablePan = false;
-      controls.autoRotate = true; controls.autoRotateSpeed = 0.35;
-      controls.minDistance = 3; controls.maxDistance = 10;
+    // Lightbox (gallery)
+    const lb = document.getElementById('lightbox');
+    const lbImg = lb ? lb.querySelector('img') : null;
+    document.querySelectorAll('[data-lb]').forEach(img=>{
+      img.addEventListener('click', ()=>{ if(lbImg){ lbImg.src = img.src; lb.classList.add('show'); } });
+    });
+    if(lb){ lb.addEventListener('click', e=>{ if(e.target===lb) lb.classList.remove('show'); }); }
 
-      const COUNT = 1800, geom = new THREE.BufferGeometry(), pos=new Float32Array(COUNT*3);
-      for (let i=0;i<COUNT;i++){
-        const r = 22*Math.pow(Math.random(), .6);
-        const th=Math.random()*Math.PI*2, ph=Math.acos(2*Math.random()-1);
-        pos[i*3+0]=r*Math.sin(ph)*Math.cos(th);
-        pos[i*3+1]=r*Math.cos(ph)*.55;
-        pos[i*3+2]=r*Math.sin(ph)*Math.sin(th);
+    // Photo scroller arrows
+    const strip = document.getElementById('strip');
+    const leftArrow = document.querySelector('.arrow.left');
+    const rightArrow = document.querySelector('.arrow.right');
+    const by = () => strip ? Math.min(strip.clientWidth * 0.85, 600) : 0;
+    if (leftArrow && strip) leftArrow.addEventListener('click', ()=> strip.scrollBy({left: -by(), behavior:'smooth'}));
+    if (rightArrow && strip) rightArrow.addEventListener('click', ()=> strip.scrollBy({left: by(), behavior:'smooth'}));
+    if (strip){
+      const vids = strip.querySelectorAll('video');
+      const vio = new IntersectionObserver(es=>es.forEach(e=>{
+        const v = e.target; if(!v) return;
+        if(e.isIntersecting){ v.play().catch(()=>{}); } else { v.pause(); }
+      }), {root: strip, threshold: .8});
+      vids.forEach(v=>vio.observe(v));
+    }
+
+    // ===== Countries counter (robust) =====
+    const TOTAL = 195;
+    const chips = Array.from(document.querySelectorAll('#countryChips [data-country]'));
+    const unique = new Set(chips.map(c => (c.getAttribute('data-country')||'').trim()).filter(Boolean));
+    const visited = unique.size;
+    const leftCountries = TOTAL - visited;
+
+    function countUp(el, to, ms=500){
+      if(!el) return;
+      const start = performance.now(); const from = +el.textContent || 0;
+      function step(t){
+        const p = Math.min(1,(t-start)/ms);
+        el.textContent = Math.round(from + (to-from)*p);
+        if(p<1) requestAnimationFrame(step);
       }
-      geom.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
-      scene.add(new THREE.Points(geom, new THREE.PointsMaterial({ color:0x86efac, size:.02, transparent:true, opacity:.9 })));
+      requestAnimationFrame(step);
+    }
+    const totalEl = document.getElementById('totalCount');
+    if (totalEl) totalEl.textContent = TOTAL;
+    countUp(document.getElementById('visitedCount'), visited);
+    countUp(document.getElementById('leftCount'), leftCountries);
+    const progSpan = document.getElementById('visitProg');
+    if (progSpan) progSpan.style.width = (visited / TOTAL * 100).toFixed(2) + '%';
 
-      const knot = new THREE.Mesh(
-        new THREE.TorusKnotGeometry(0.8,0.25,200,32),
-        new THREE.MeshStandardMaterial({ color:0xa7f3d0, metalness:.2, roughness:.25 })
-      );
-      scene.add(knot);
+    // ===== Download PDF (native print) =====
+    function expandAllForPrint(){
+      document.querySelectorAll('.exp-item').forEach(el=> el.classList.add('open'));
+    }
+    function printNow(){
+      expandAllForPrint();
+      const three = document.getElementById('three-root');
+      const prevDisplay = three ? three.style.display : null;
+      if (three) three.style.display = 'none';
+      setTimeout(()=>{
+        window.print();
+        if (three && prevDisplay !== null) three.style.display = prevDisplay;
+      }, 80);
+    }
+    const printBtn = document.getElementById('printBtn');
+    if (printBtn) printBtn.addEventListener('click', printNow);
+    if ('onbeforeprint' in window) window.onbeforeprint = expandAllForPrint;
 
-      scene.add(new THREE.AmbientLight(0xffffff,.6));
-      const dir = new THREE.DirectionalLight(0xffffff,1.2); dir.position.set(3,3,4); scene.add(dir);
+    // ===== Three.js scene (guarded so failures don't break page) =====
+    try{
+      if (window.THREE && document.getElementById('three-root')){
+        const root = document.getElementById('three-root');
+        const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+        renderer.setSize(innerWidth, innerHeight);
+        root.appendChild(renderer.domElement);
 
-      const clock = new THREE.Clock();
-      (function tick(){
-        const t = clock.getElapsedTime();
-        knot.rotation.x = t*.35; knot.rotation.y = t*.25;
-        controls.update(); renderer.render(scene,camera); requestAnimationFrame(tick);
-      })();
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(new THREE.Color('#0b1024'), 0.035);
+        const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, .1, 200);
+        camera.position.set(0, 1.2, 6);
 
-      addEventListener('resize',()=>{ renderer.setSize(innerWidth, innerHeight); camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); });
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; controls.enablePan = false;
+        controls.autoRotate = true; controls.autoRotateSpeed = 0.35;
+        controls.minDistance = 3; controls.maxDistance = 10;
+
+        const COUNT = 1800, geom = new THREE.BufferGeometry(), pos=new Float32Array(COUNT*3);
+        for (let i=0;i<COUNT;i++){
+          const r = 22*Math.pow(Math.random(), .6);
+          const th=Math.random()*Math.PI*2, ph=Math.acos(2*Math.random()-1);
+          pos[i*3+0]=r*Math.sin(ph)*Math.cos(th);
+          pos[i*3+1]=r*Math.cos(ph)*.55;
+          pos[i*3+2]=r*Math.sin(ph)*Math.sin(th);
+        }
+        geom.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+        scene.add(new THREE.Points(geom, new THREE.PointsMaterial({ color:0x86efac, size:.02, transparent:true, opacity:.9 })));
+
+        const knot = new THREE.Mesh(
+          new THREE.TorusKnotGeometry(0.8,0.25,200,32),
+          new THREE.MeshStandardMaterial({ color:0xa7f3d0, metalness:.2, roughness:.25 })
+        );
+        scene.add(knot);
+
+        scene.add(new THREE.AmbientLight(0xffffff,.6));
+        const dir = new THREE.DirectionalLight(0xffffff,1.2); dir.position.set(3,3,4); scene.add(dir);
+
+        const clock = new THREE.Clock();
+        (function tick(){
+          const t = clock.getElapsedTime();
+          knot.rotation.x = t*.35; knot.rotation.y = t*.25;
+          controls.update(); renderer.render(scene,camera); requestAnimationFrame(tick);
+        })();
+
+        addEventListener('resize',()=>{ renderer.setSize(innerWidth, innerHeight); camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); });
+      }
+    }catch(err){
+      console.warn('3D background disabled:', err);
+    }
+
+    /* === Visitor Counter (CountAPI) — increments once per visitor per day === */
+    (async function(){
+      const badge = document.getElementById('visitNum');
+      if (!badge) return;
+
+      const NAMESPACE = 'arjun-nemani';   // change if you want a different counter namespace
+      const KEY       = 'resume-page';     // unique id for this page
+
+      const DAY_MS = 86_400_000;
+      const seenKey = `visit-seen-${NAMESPACE}-${KEY}`;
+      const lastSeen = Number(localStorage.getItem(seenKey)) || 0;
+      const uniqueToday = (Date.now() - lastSeen) > DAY_MS;
+
+      const base = 'https://api.countapi.xyz';
+      const path = uniqueToday ? 'hit' : 'get';
+      const url  = `${base}/${path}/${encodeURIComponent(NAMESPACE)}/${encodeURIComponent(KEY)}`;
+
+      try{
+        const res = await fetch(url, { cache:'no-store' });
+        const data = await res.json();
+        if (typeof data.value === 'number') {
+          badge.textContent = data.value.toLocaleString();
+        } else {
+          badge.textContent = '—';
+        }
+        if (uniqueToday) localStorage.setItem(seenKey, String(Date.now()));
+      }catch(e){
+        console.warn('Visitor counter failed:', e);
+        badge.textContent = '—';
+      }
     })();
+  });
+  </script>
+
+  <!-- JSON-LD (optional) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Arjun Nemani",
+    "jobTitle": "Marketing Manager / Tech Lead",
+    "email": "mailto:dromelette2090@gmail.com",
+    "url": "https://www.linkedin.com/in/arjun-nemani/",
+    "knowsAbout": ["Flutter","Firebase","CI/CD","Manufacturing Ops","BRCGS Food Packaging","Digital Marketing"],
+    "hasOccupation": [
+      {"@type":"Occupation","name":"Marketing Manager","occupationLocation":{"@type":"Country","name":"Ghana"}},
+      {"@type":"Occupation","name":"Tech Lead","occupationLocation":{"@type":"Country","name":"Portugal"}},
+      {"@type":"Occupation","name":"Technical Recruiter","occupationLocation":{"@type":"Place","name":"Remote"}},
+      {"@type":"Occupation","name":"DevOps Engineer","occupationLocation":{"@type":"Country","name":"France"}}
+    ]
+  }
   </script>
 </body>
 </html>
